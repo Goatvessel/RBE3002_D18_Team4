@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-import rospy, tf, copy, math
+import rospy, tf, copy, math, time
 
 from geometry_msgs.msg import Twist, Pose, PoseStamped
+from nav_msgs.msg import Path
 from tf.transformations import euler_from_quaternion
 import numpy as np
 from std_msgs.msg import String
@@ -19,20 +20,20 @@ class Robot:
         self._odom_list.waitForTransform('/odom', '/base_link', rospy.Time(0), rospy.Duration(1.0))
         (position, orientation) = self._odom_list.lookupTransform('/odom','/base_link', rospy.Time(0))
         """
-        self._current.position.x = 0
+        self._current.position.x = 0 #!FIXME Do we need this?
         self._current.position.y = 0
         self._current.orientation.x = 0
         self._current.orientation.y = 0
         self._current.orientation.z = 0
-        self._current.orientation.w = 0
+        self._current.orientation.w = 0 #!FIXME Do we need this?
         self._odom_list = tf.TransformListener()
         rospy.Timer(rospy.Duration(.1), self.timerCallback)
         self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.navToPose, queue_size=1) # handle nav goal events
         rospy.sleep(0.2)
-        self.yaw = 0
+        self.yaw = 0 #!FIXME Do we need this?
         self.pitch = 0
-        self.role = 0
+        self.roll = 0 #!FIXME Do we need this?
 
 
     def navToPose(self,goal):
