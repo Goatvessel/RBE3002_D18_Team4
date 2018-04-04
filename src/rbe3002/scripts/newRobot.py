@@ -28,7 +28,7 @@ class Robot:
 		twist.angular.z = angular
 		return twist
 
-    def _convert_pose(myPose):
+    def _convert_pose(self,myPose):
         # Converts a Pose message into a list of [X-Position, Y-Position, Yaw]
         # Where Yaw is the rotation about the Z-Axis
         q = [myPose.orientation.x,
@@ -48,20 +48,20 @@ class Robot:
         self._odom_list.waitForTransform('odom', 'base_link', rospy.Time.now(), rospy.Duration(1.0))
         # transform the nav goal from the global coordinate system to the robot's coordinate system
         GoalPoseStamped = self._odom_list.transformPose('base_link', goal)
-        GoalPose = _convert_pose(GoalPoseStamped.pose)
+        GoalPose = self._convert_pose(GoalPoseStamped.pose)
         xGoal = GoalPose[0] # Desired X
         yGoal = GoalPose[1] # Desired Y
         yawGoal = GoalPose[2] # Desired yaw - angle about z axis
 
         # Current Pose
         origin = copy.deepcopy(self._current)
-        initialPose = _convert_pose(origin)
+        initialPose = self._convert_pose(origin)
         xInitial = initialPose[0] # Current X
         yInitial = initialPose[1] # CUrrent Y
         yawInitial = initialPose[2] # Current Yaw
 
         # Distance to the Goal from the Start
-        straightline = math.sqrt((math.pow(xGoal,2) + math.pow(yGoal,2))
+        straightline = math.sqrt(math.pow(xGoal,2) + math.pow(yGoal,2))
         # Angle between the Initial orientation and the Goal orientation
         initialYaw = math.atan2(yGoal,xGoal)
 
@@ -93,7 +93,7 @@ class Robot:
         distance = distance # [m]
 
         origin = copy.deepcopy(self._current)
-        currentPose = _convert_pose(origin)
+        currentPose = self._convert_pose(origin)
         initial_x = current_x = currentPose[0]
         initial_y = current_y = currentPose[1]
         current_yaw = currentPose[2]
@@ -105,13 +105,13 @@ class Robot:
         distanceToGo = distance - distanceTraveled
 
         while distanceToGo > 0:
-			self.spinWheels(v_left, v_right, interval)
-            currentPose = _convert_pose(copy.deepcopy(self._current))
-			current_x = currentPose[0]
-			current_y = currentPose[1]
+            self.spinWheels(v_left, v_right, interval)
+            currentPose = self._convert_pose(copy.deepcopy(self._current))
+            current_x = currentPose[0]
+            current_y = currentPose[1]
 
-			distanceTraveled = math.sqrt(math.pow(current_x - initial_x,2) + math.pow(current_y - initial_y,2))
-			distanceToGo = distance - distanceTraveled # Update remaining distance
+            distanceTraveled = math.sqrt(math.pow(current_x - initial_x,2) + math.pow(current_y - initial_y,2))
+            distanceToGo = distance - distanceTraveled # Update remaining distance
 			# Debug print current position, distance traveled, and remaining distance to travel
             if _DEBUG_:
                 print("Current X: ",current_x)
@@ -160,7 +160,7 @@ class Robot:
 			origin.orientation.z,
 			origin.orientation.w] # quaternion nonsense
         (roll, pitch, yaw) = euler_from_quaternion(q)
-        initialPose = _convert_pose(copy.deepcopy(self._current))
+        initialPose = self._convert_pose(copy.deepcopy(self._current))
         currentYaw = initialPose[2]
         goalYaw = angle + currentYaw # Goal angle
 
@@ -175,9 +175,9 @@ class Robot:
                 self.spinWheels(speed,-speed,interval)
             else: # Withershins
                 self.spinWheels(-speed,speed,interval)
-            currentYaw = _convert_pose(copy.deepcopy(self._current))[2]
+            currentYaw = self._convert_pose(copy.deepcopy(self._current))[2]
             if _DEBUG_:
-                print ("Current Angle: ",curentYaw," Distance To Go: ",abs(goalYaw-currentYaw))
+                print ("Current Angle: ",currentYaw," Distance To Go: ",abs(goalYaw-currentYaw))
 
 
     def timerCallback(self,evprent):
@@ -246,6 +246,7 @@ class Robot:
 
 if __name__ == '__main__':
     _TEST_ = "TRAJECTORY"
+    #_TEST_ = "DRIVESTRAIGHT"
 
     print("-- Begin Operation --")
     rospy.init_node('drive_base')
