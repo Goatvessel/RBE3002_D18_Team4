@@ -1,0 +1,13 @@
+
+roslaunch turtlebot3_gazebo turtlebot3_empty_world.launch
+roslaunch turtlebot3_fake  turtlebot3_fake.launch
+
+rosparam set /use_sim_time false
+
+ksmadhurkar@ak120d-13:~/catkin_ws/kmadhurkar_lab2/src$ python lab2_template.py
+export TUTRTLEBOT3_MODEL burger
+
+
+
+
+rosspa
