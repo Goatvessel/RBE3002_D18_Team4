@@ -15,8 +15,6 @@ from Queue import PriorityQueue
 
 
 
-
-
 # reads in global map
 def mapCallBack(data):
     global mapData
@@ -51,6 +49,13 @@ def readStart(startPos):
     global startPosY
     startPosX = startPos.pose.pose.position.x
     startPosY = startPos.pose.pose.position.y
+    startCell = GridCells()
+    startCell.cell_width=resolution
+    startCell.cell_height=resolution
+    point = Point()
+    point.
+    startCell.
+    publishCells(startCell)
     print startPos.pose.pose
 
 def aStar(start,goal):
