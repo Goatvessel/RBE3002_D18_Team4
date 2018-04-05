@@ -41,6 +41,7 @@ def readGoal(goal):
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
     print goal.pose
+
     # Start Astar
 
 
@@ -59,7 +60,8 @@ def aStar(start,goal):
     # generate a path to the start and end goals by searching through the neighbors, refer to aStar_explanied.py
 
     # for each node in the path, process the nodes to generate GridCells and Path messages
-    while (not openSet.empty())
+    while (not openSet.empty()):
+        pass
 
     # Publish points
 
@@ -77,16 +79,14 @@ def publishCells(grid):
     cells.cell_height = resolution
 
     for i in range(1,height): #height should be set to hieght of grid
-        k=k+1
         for j in range(1,width): #width should be set to width of grid
-            k=k+1
-            #print k # used for debugging
-            if (grid[k] == 100):
-                point=Point()
-                point.x=(j*resolution)+offsetX + (1.5 * resolution) # added secondary offset
-                point.y=(i*resolution)+offsetY - (.5 * resolution) # added secondary offset ... Magic ?
-                point.z=0
+            if(grid[k] == 100):
+                point = Point()
+                point.x = (j*resolution) + offsetX + (.5*resolution)
+                point.y = (j*resolution) + offsetY + (.5*resolution)
+                point.z = 0
                 cells.cells.append(point)
+            k=k+1
     pub.publish(cells)
 
 #Main handler of the project
@@ -101,7 +101,7 @@ def run():
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
 
     # wait a second for publisher, subscribers, and TF
-    rospy.sleep(1)
+    rospy.sleep(5)
 
 
 
