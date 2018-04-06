@@ -90,6 +90,32 @@ def readStart(startPos):
 def aStar(start,goal):
     pass
     # create a new instance of the map
+    # sudo code
+    def a_star_search(graph, start, goal):
+        # give start and nav 
+    frontier = PriorityQueue()
+    frontier.put(start, 0)
+    came_from = {}
+    cost_so_far = {}
+    came_from[start] = None
+    cost_so_far[start] = 0
+
+    while not frontier.empty():
+        current = frontier.get()
+
+        if current == goal:
+            break
+
+        for next in graph.neighbors(current):
+            new_cost = cost_so_far[current] + graph.cost(current, next) #change graph stuff to map
+            if next not in cost_so_far or new_cost < cost_so_far[next]:
+                cost_so_far[next] = new_cost
+                priority = new_cost + heuristic(goal, next)
+                frontier.put(next, priority)
+                came_from[next] = current
+
+    return came_from, cost_so_far
+    #...
 
     # generate a path to the start and end goals by searching through the neighbors, refer to aStar_explanied.py
 
@@ -125,6 +151,7 @@ def publishCells(grid):
                 point.z=0
                 cells.cells.append(point)
             k = k + 1
+
     pub.publish(cells)
 
 #Main handler of the project
