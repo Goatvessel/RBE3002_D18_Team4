@@ -33,58 +33,50 @@ def mapCallBack(data):
     offsetY = data.info.origin.position.y
     print data.info
 
+def getIndex(xPos,yPos):
+    xPos = xPos
+    yPos = yPos
+    x = int(xPos/resolution - offsetX/resolution)
+    y = int(yPos/resolution - offsetY/resolution)
+    index = int(y*width + x)
+    return index
+
+def generateGridCells(indexList):
+    cells=GridCells()
+    cells.header.frame_id = 'map'
+    cells.cell_width=resolution
+    cells.cell_height=resolution
+    for index in indexList:
+        point = Point()
+        point.x = (index%width)*resolution+offsetX + (0.5 * resolution)
+        point.y = (index//width)*resolution+offsetY + (0.5 * resolution)
+        cells.cells.append(point)
+    return cells
+
+
+
 def readGoal(goal):
     global goalX
     global goalY
     global goalPub
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
-
-    #finds the start within the cell boundaries
-    actX = goalX/1
-
-    goalCell = GridCells()
-    goalCell.header.frame_id = 'map'
-    goalCell.cell_width=resolution
-    goalCell.cell_height=resolution
-    point = Point()
-    point.x = goalX
-    point.y = goalY
-    # point.x = 11.15
-    # point.y = 10.65
-    point.z = 0
-    goalCell.cells.append(point)
-    #print(goalCell)
-    goalPub.publish(goalCell)
-
-
+    goalIndex = []
+    goalIndex.append(getIndex(goalX,goalY))
+    cells = generateGridCells(goalIndex)
+    goalPub.publish(cells)
     print goal.pose
 
-    # Start Astar
-
-
 def readStart(startPos):
-
     global startPosX
     global startPosY
     global startPub
     startPosX = startPos.pose.pose.position.x
     startPosY = startPos.pose.pose.position.y
-
-    startCell = GridCells()
-    startCell.header.frame_id = 'map'
-    startCell.cell_width=resolution
-    startCell.cell_height=resolution
-    point = Point()
-    point.x = round(startPos.pose.pose.position.x,0)
-    point.y = round(startPos.pose.pose.position.y,0)
-    # point.x = 11.15
-    # point.y = 10.65
-    point.z = 0
-    startCell.cells.append(point)
-    print(startCell)
-    startPub.publish(startCell)
-    #publishCells(startCell)
+    startIndex = []
+    startIndex.append(getIndex(startPosX,startPosY))
+    cells = generateGridCells(startIndex)
+    startPub.publish(cells)
     print startPos.pose.pose
 
 def aStar(start,goal):
@@ -137,6 +129,7 @@ def run():
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)
     startPub = rospy.Publisher("/start_cell", GridCells, queue_size=1)
     goalPub = rospy.Publisher("/goal_cell", GridCells, queue_size=1)
+    frontierPub = rospy.Publisher("/frontier", GridCells, queue_size=1)
     pubpath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
@@ -144,11 +137,13 @@ def run():
 
     # wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
+    #pathCells = generateGridCells([110,111,112,113])
 
 
 
     while (not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
+        #frontierPub.publish(pathCells)
         rospy.sleep(2)
         print("Complete")
 
