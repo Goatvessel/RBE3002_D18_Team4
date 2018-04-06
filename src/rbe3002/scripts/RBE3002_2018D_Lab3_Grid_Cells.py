@@ -41,6 +41,11 @@ def getIndex(xPos,yPos):
     index = int(y*width + x)
     return index
 
+def getXY(index):
+    y = index//width
+    x = index%width
+    return x, y
+
 def generateGridCells(indexList):
     cells=GridCells()
     cells.header.frame_id = 'map'
@@ -65,19 +70,28 @@ def getNeighbors(index):
             neighborIndices.append(temp)
     return neighborIndices
 
-
+def getEuclidean(start,goal):
+    startX, startY = getXY(start)
+    goalX, goalY = getXY(goal)
+    x_distance = goalX - startX
+    y_distance = goalY - startY
+    distance = math.sqrt(pow(x_distance,2)+pow(y_distance,2))
+    return distance
 
 def readGoal(goal):
     global goalX
     global goalY
     global goalPub
+    global goalCell
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
     goalIndex = []
-    print("Goal Index: ",getIndex(goalX,goalY))
+    goalCell = getIndex(goalX,goalY)
+    print("Goal Index: ",goalCell)
     goalIndex.append(getIndex(goalX,goalY))
     cells = generateGridCells(goalIndex)
     goalPub.publish(cells)
+    aStar(startCell,goalCell)
     print goal.pose
 
 def readStart(startPos):
@@ -86,34 +100,61 @@ def readStart(startPos):
     global startPub
     global wallIndices
     global frontierPub
+    global startCell
     startPosX = startPos.pose.pose.position.x
     startPosY = startPos.pose.pose.position.y
     startIndex = []
-    print("Start Index: ",getIndex(startPosX,startPosY))
+    startCell = getIndex(startPosX,startPosY)
+    print("Start Index: ",startCell)
     startIndex.append(getIndex(startPosX,startPosY))
     cells = generateGridCells(startIndex)
     startPub.publish(cells)
 
     howdyNeighbors = getNeighbors(getIndex(startPosX,startPosY))
     neighborCells = generateGridCells(howdyNeighbors)
-    frontierPub.publish(neighborCells)
+    #frontierPub.publish(neighborCells)
 
 
     print startPos.pose.pose
 
 def aStar(start,goal):
-    frontier = PriorityQueue
-    frontier.put(startIndex, 0)
+    frontier = PriorityQueue()
+    frontier.put(0, start)
     parent = {}
-    cost = {start:0}
+    openSet = []
+    frontierList = []
+    cost = {0:start}
     #currentCost[startIndex] = 0
     # create a new instance of the map
-    while frontier not empty:
+    while not frontier.empty():
         currentIndex = frontier.get()
-        
+        print("CURRENT INDEX: ",currentIndex)
+        openSet.append(currentIndex)
+        openSetPub.publish(generateGridCells(openSet))
 
-        if currentIndex = goal:
+
+
+
+        if currentIndex == goal:
             break
+
+        neighbors = getNeighbors(currentIndex)
+        for neighbor in neighbors:
+            if neighbor not in openSet:
+                gScore = cost.get(currentIndex)+1
+                hScore = getEuclidean(neighbor,goal)
+                fScore = gScore + hScore
+                cost.update({neighbor:fScore})
+                frontier.put(fScore,neighbor)
+                frontierList.append(neighbor)
+
+        rospy.sleep(1)
+        frontierList = list(frontier.queue)
+        frontierCells = generateGridCells(frontierList)
+        frontierPub.publish(frontierCells)
+
+
+
 
     #parent.update({node:myParent})
 
@@ -167,6 +208,7 @@ def run():
     global goalPub
     global wallIndices
     global frontierPub
+    global openSetPub
     wallIndices = []
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
@@ -174,6 +216,7 @@ def run():
     startPub = rospy.Publisher("/start_cell", GridCells, queue_size=1)
     goalPub = rospy.Publisher("/goal_cell", GridCells, queue_size=1)
     frontierPub = rospy.Publisher("/frontier", GridCells, queue_size=1)
+    openSetPub = rospy.Publisher("/openSet", GridCells, queue_size=1)
     pubpath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
