@@ -53,6 +53,18 @@ def generateGridCells(indexList):
         cells.cells.append(point)
     return cells
 
+def getNeighbors(index):
+    tempNeighborIndices = []
+    neighborIndices = []
+    tempNeighborIndices.append(index+37)
+    tempNeighborIndices.append(index-37)
+    tempNeighborIndices.append(index-1)
+    tempNeighborIndices.append(index+1)
+    for temp in tempNeighborIndices:
+        if temp not in wallIndices:
+            neighborIndices.append(temp)
+    return neighborIndices
+
 
 
 def readGoal(goal):
@@ -62,6 +74,7 @@ def readGoal(goal):
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
     goalIndex = []
+    print("Goal Index: ",getIndex(goalX,goalY))
     goalIndex.append(getIndex(goalX,goalY))
     cells = generateGridCells(goalIndex)
     goalPub.publish(cells)
@@ -71,17 +84,39 @@ def readStart(startPos):
     global startPosX
     global startPosY
     global startPub
+    global wallIndices
+    global frontierPub
     startPosX = startPos.pose.pose.position.x
     startPosY = startPos.pose.pose.position.y
     startIndex = []
+    print("Start Index: ",getIndex(startPosX,startPosY))
     startIndex.append(getIndex(startPosX,startPosY))
     cells = generateGridCells(startIndex)
     startPub.publish(cells)
+
+    howdyNeighbors = getNeighbors(getIndex(startPosX,startPosY))
+    neighborCells = generateGridCells(howdyNeighbors)
+    frontierPub.publish(neighborCells)
+
+
     print startPos.pose.pose
 
 def aStar(start,goal):
-    pass
+    frontier = PriorityQueue
+    frontier.put(startIndex, 0)
+    parent = {}
+    cost = {start:0}
+    #currentCost[startIndex] = 0
     # create a new instance of the map
+    while frontier not empty:
+        currentIndex = frontier.get()
+        
+
+        if currentIndex = goal:
+            break
+
+    #parent.update({node:myParent})
+
 
     # generate a path to the start and end goals by searching through the neighbors, refer to aStar_explanied.py
 
@@ -95,10 +130,12 @@ def aStar(start,goal):
 
 def publishCells(grid):
     global pub
-    print "publishing"
+    global wallIndices
+    #print "publishing"
 
     # resolution and offset of the map
     k=0
+
     cells = GridCells()
     cells.header.frame_id = 'map'
     cells.cell_width = resolution
@@ -110,12 +147,16 @@ def publishCells(grid):
             # grid values are probability percentages of occupancy. The following condition gives all the cells where
             # occupancy probability is more than 50%
             if (grid[k] > 50):
+
                 point=Point()
                 # 0.5*resolution moves the point to the center of the grid cell
                 point.x=(j*resolution)+offsetX + (0.5 * resolution)
                 point.y=(i*resolution)+offsetY + (0.5 * resolution)
                 point.z=0
                 cells.cells.append(point)
+                index = i*width+j
+                if index not in wallIndices:
+                    wallIndices.append(index)
             k = k + 1
     pub.publish(cells)
 
@@ -124,6 +165,9 @@ def run():
     global pub
     global startPub
     global goalPub
+    global wallIndices
+    global frontierPub
+    wallIndices = []
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)
@@ -143,9 +187,10 @@ def run():
 
     while (not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
+        #frontierPub.publish(generateGridCells(wallIndices))
         #frontierPub.publish(pathCells)
         rospy.sleep(2)
-        print("Complete")
+        #print("Complete")
 
 
 

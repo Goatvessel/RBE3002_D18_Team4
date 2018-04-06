@@ -5,11 +5,13 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Grid1
         - /Grid1/Offset1
-        - /MapCheck1/Status1
         - /Map1/Position1
+        - /Start Pose1/Status1
+        - /Start Pose1/Covariance1
         - /Start Pose1/Covariance1/Position1
-        - /StartCell1/Status1
+        - /Frontier1
       Splitter Ratio: 0.508333325
     Tree Height: 744
   - Class: rviz/Selection
@@ -37,7 +39,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 1
+      Cell Size: 0.300000012
       Class: rviz/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -47,8 +49,8 @@ Visualization Manager:
       Name: Grid
       Normal Cell Count: 0
       Offset:
-        X: 0
-        Y: 0
+        X: 6.05000019
+        Y: 5.55000019
         Z: 0
       Plane: XY
       Plane Cell Count: 37
@@ -118,15 +120,15 @@ Visualization Manager:
         Position:
           Alpha: 1
           Color: 204; 1; 1
-          Scale: 1
+          Scale: 0.300000012
           Value: true
         Value: true
       Enabled: true
       Head Length: 0.300000012
-      Head Radius: 0.200000003
+      Head Radius: 0.100000001
       Name: Start Pose
-      Shaft Length: 2
-      Shaft Radius: 0.100000001
+      Shaft Length: 1
+      Shaft Radius: 0.0560000017
       Shape: Arrow
       Topic: /initialpose
       Unreliable: false
@@ -140,7 +142,7 @@ Visualization Manager:
       Head Length: 0.300000012
       Head Radius: 0.100000001
       Name: Goal Pose
-      Shaft Length: 2
+      Shaft Length: 1
       Shaft Radius: 0.0500000007
       Shape: Arrow
       Topic: /move_base_simple/goal
@@ -159,6 +161,13 @@ Visualization Manager:
       Enabled: true
       Name: GoalCell
       Topic: /goal_cell
+      Value: true
+    - Alpha: 1
+      Class: rviz/GridCells
+      Color: 85; 170; 255
+      Enabled: true
+      Name: Frontier
+      Topic: /frontier
       Value: true
   Enabled: true
   Global Options:
@@ -193,11 +202,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 38.6959267
+      Scale: 40.6755295
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: -2.32033634
-      Y: 5.0383215
+      X: 10.1746225
+      Y: 6.26374102
     Saved: ~
 Window Geometry:
   Displays:
