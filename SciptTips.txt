@@ -1,0 +1,9 @@
+Bashrc:
+export TURTLEBOT3_MODEL=burger
+export EDITOR="atom"
+export VISUAL="atom"
+alias lab4_rviz="rosrun rviz rviz -d `rospack find rbe3002`/rviz/Lab4Maze.rviz"
+alias simpleMap="rosrun map_server map_server `rospack find rbe3002`/stagemaps/simple_map.yaml"
+
+
+
