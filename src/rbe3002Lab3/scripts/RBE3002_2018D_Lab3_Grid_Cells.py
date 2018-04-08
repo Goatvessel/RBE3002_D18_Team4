@@ -33,6 +33,7 @@ def mapCallBack(data):
     offsetY = data.info.origin.position.y
     print data.info
 
+# Function returns index given x and y
 def getIndex(xPos,yPos):
     xPos = xPos
     yPos = yPos
@@ -41,6 +42,7 @@ def getIndex(xPos,yPos):
     index = int(y*width + x)
     return index
 
+#Function returns x and y given index
 def getXY(index):
     y = index//width
     x = index%width
@@ -59,24 +61,26 @@ def generateGridCells(indexList,height=0):
         cells.cells.append(point)
     return cells
 
+#function to get neighbour cells
 def getNeighbors(index):
-    tempNeighborIndices = []
-    neighborIndices = []
-    tempNeighborIndices.append(index+37)
-    tempNeighborIndices.append(index-37)
-    tempNeighborIndices.append(index-1)
-    tempNeighborIndices.append(index+1)
+    tempNeighborIndices = [] #temporary neighnours
+    neighborIndices = []     #Final neighbour list
+    tempNeighborIndices.append(index+37) #to get the cell beneath current cell
+    tempNeighborIndices.append(index-37) #to get the cell above current cell
+    tempNeighborIndices.append(index-1)  #to get the cell to the left of current cell
+    tempNeighborIndices.append(index+1)  #to get the cell to the right of current cell
     for temp in tempNeighborIndices:
-        if (temp not in wallIndices):
-            neighborIndices.append(temp)
+        if (temp not in wallIndices): #checks tempneighbourlist for wall indices and
+            neighborIndices.append(temp) #generates a final list of neighbour indices excluding all wall cells
     return neighborIndices
 
+#Function takes in start and goal and returns the euclidean distance
 def getEuclidean(start,goal):
-    startX, startY = getXY(start)
-    goalX, goalY = getXY(goal)
-    x_distance = goalX - startX
-    y_distance = goalY - startY
-    distance = math.sqrt(pow(x_distance,2)+pow(y_distance,2))
+    startX, startY = getXY(start) #calls getXY function to get x and y values of start
+    goalX, goalY = getXY(goal)    # and goal
+    x_distance = goalX - startX #calculats the x distance
+    y_distance = goalY - startY #calculats the x distance
+    distance = math.sqrt(pow(x_distance,2)+pow(y_distance,2)) #distance formula
     return distance
 
 def readGoal(goal):
@@ -84,15 +88,15 @@ def readGoal(goal):
     global goalY
     global goalPub
     global goalCell
-    goalX= goal.pose.position.x
+    goalX= goal.pose.position.x #gets the x and y position from goal
     goalY= goal.pose.position.y
     goalIndex = []
-    goalCell = getIndex(goalX,goalY)
+    goalCell = getIndex(goalX,goalY) #call getIndex function to get the index of goal cell
     print("Goal Index: ",goalCell)
     goalIndex.append(getIndex(goalX,goalY))
-    cells = generateGridCells(goalIndex,3)
-    goalPub.publish(cells)
-    aStar(startCell,goalCell)
+    cells = generateGridCells(goalIndex,3) #generates goal cell of height 3 i.e highest priority
+    goalPub.publish(cells) #publishes goal cell
+    aStar(startCell,goalCell) #calls astar
     print goal.pose
 
 def readStart(startPos):
@@ -102,13 +106,13 @@ def readStart(startPos):
     global wallIndices
     global frontierPub
     global startCell
-    startPosX = startPos.pose.pose.position.x
+    startPosX = startPos.pose.pose.position.x #gets the x and y position from start position
     startPosY = startPos.pose.pose.position.y
     startIndex = []
-    startCell = getIndex(startPosX,startPosY)
+    startCell = getIndex(startPosX,startPosY)  #call getIndex function to get the index of goal cell
     print("Start Index: ",startCell)
     startIndex.append(getIndex(startPosX,startPosY))
-    cells = generateGridCells(startIndex,3)
+    cells = generateGridCells(startIndex,3) #generates start cell of height 3 i.e highest priority
     startPub.publish(cells)
 
     #howdyNeighbors = getNeighbors(getIndex(startPosX,startPosY))
