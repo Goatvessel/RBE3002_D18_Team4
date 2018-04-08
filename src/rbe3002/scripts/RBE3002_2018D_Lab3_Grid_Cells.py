@@ -46,7 +46,7 @@ def getXY(index):
     x = index%width
     return x, y
 
-def generateGridCells(indexList):
+def generateGridCells(indexList,height=0):
     cells=GridCells()
     cells.header.frame_id = 'map'
     cells.cell_width=resolution
@@ -55,6 +55,7 @@ def generateGridCells(indexList):
         point = Point()
         point.x = (index%width)*resolution+offsetX + (0.5 * resolution)
         point.y = (index//width)*resolution+offsetY + (0.5 * resolution)
+        point.z = height
         cells.cells.append(point)
     return cells
 
@@ -66,7 +67,7 @@ def getNeighbors(index):
     tempNeighborIndices.append(index-1)
     tempNeighborIndices.append(index+1)
     for temp in tempNeighborIndices:
-        if temp not in wallIndices:
+        if (temp not in wallIndices):
             neighborIndices.append(temp)
     return neighborIndices
 
@@ -89,7 +90,7 @@ def readGoal(goal):
     goalCell = getIndex(goalX,goalY)
     print("Goal Index: ",goalCell)
     goalIndex.append(getIndex(goalX,goalY))
-    cells = generateGridCells(goalIndex)
+    cells = generateGridCells(goalIndex,3)
     goalPub.publish(cells)
     aStar(startCell,goalCell)
     print goal.pose
@@ -107,30 +108,38 @@ def readStart(startPos):
     startCell = getIndex(startPosX,startPosY)
     print("Start Index: ",startCell)
     startIndex.append(getIndex(startPosX,startPosY))
-    cells = generateGridCells(startIndex)
+    cells = generateGridCells(startIndex,3)
     startPub.publish(cells)
 
-    howdyNeighbors = getNeighbors(getIndex(startPosX,startPosY))
-    neighborCells = generateGridCells(howdyNeighbors)
+    #howdyNeighbors = getNeighbors(getIndex(startPosX,startPosY))
+    #neighborCells = generateGridCells(howdyNeighbors)
     #frontierPub.publish(neighborCells)
 
 
     print startPos.pose.pose
 
+
 def aStar(start,goal):
+    # Send blank messages to clear rviz
+    pathPub.publish(generateGridCells([]))
+
+
     frontier = PriorityQueue()
-    frontier.put(0, start)
+    frontier.put((0, start))
     parent = {}
     openSet = []
-    frontierList = []
-    cost = {0:start}
+    frontierList = [start]
+    cost = {start:0}
     #currentCost[startIndex] = 0
     # create a new instance of the map
     while not frontier.empty():
-        currentIndex = frontier.get()
-        print("CURRENT INDEX: ",currentIndex)
+        currentTuple = frontier.get()
+        currentFScore = currentTuple[0]
+        currentIndex = currentTuple[1]
+        print("CURRENT INDEX: ",currentIndex," Current F Score: ",currentFScore)
         openSet.append(currentIndex)
-        openSetPub.publish(generateGridCells(openSet))
+        frontierList.remove(currentIndex)
+
 
 
 
@@ -139,21 +148,45 @@ def aStar(start,goal):
             break
 
         neighbors = getNeighbors(currentIndex)
+        print(neighbors)
         for neighbor in neighbors:
-            if neighbor not in openSet:
-                gScore = cost.get(currentIndex)+1
+            if (neighbor not in cost) or (cost[neighbor] > cost[currentIndex] + 1):
+                #print(neighbor)
+                gScore = cost[currentIndex]+1
+                print(gScore)
                 hScore = getEuclidean(neighbor,goal)
                 fScore = gScore + hScore
-                cost.update({neighbor:fScore})
-                frontier.put(fScore,neighbor)
+                #print("currentIndex: ",currentIndex," Neighbor: ",neighbor," F Score",fScore)
+                cost.update({neighbor:gScore})
+                frontier.put((fScore,neighbor))
                 frontierList.append(neighbor)
+                parent.update({neighbor:currentIndex})
+                #print(frontierList)
 
-        rospy.sleep(1)
-        frontierList = list(frontier.queue)
+
+
+        rospy.sleep(.01)
+        #frontierList = list(frontier.queue)
         frontierCells = generateGridCells(frontierList)
+        currentIndexCells = generateGridCells([currentIndex], 1)
+        # Pubs and subs
+        openSetPub.publish(generateGridCells(openSet))
         frontierPub.publish(frontierCells)
 
+        currentIndexPub.publish(currentIndexCells)
 
+
+    print("A WINNER IS YOU")
+    pathList = []
+    pboi = parent[goal]
+    while (parent[pboi] != start):
+        pathList.append(pboi)
+        pboi = parent[pboi]
+    pathList.append(pboi)
+
+    pathCells = generateGridCells(pathList,2)
+    currentIndexPub.publish(generateGridCells([]))
+    pathPub.publish(pathCells)
 
 
     #parent.update({node:myParent})
@@ -162,8 +195,7 @@ def aStar(start,goal):
     # generate a path to the start and end goals by searching through the neighbors, refer to aStar_explanied.py
 
     # for each node in the path, process the nodes to generate GridCells and Path messages
-    while (not openSet.empty()):
-        pass
+
 
     # Publish points
 
@@ -204,11 +236,14 @@ def publishCells(grid):
 #Main handler of the project
 def run():
     global pub
+    global pubPath
     global startPub
     global goalPub
     global wallIndices
     global frontierPub
     global openSetPub
+    global currentIndexPub
+    global pathPub
     wallIndices = []
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
@@ -217,7 +252,9 @@ def run():
     goalPub = rospy.Publisher("/goal_cell", GridCells, queue_size=1)
     frontierPub = rospy.Publisher("/frontier", GridCells, queue_size=1)
     openSetPub = rospy.Publisher("/openSet", GridCells, queue_size=1)
-    pubpath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
+    currentIndexPub = rospy.Publisher("/currentIndex", GridCells, queue_size=1)
+    pathPub = rospy.Publisher("/realPath", GridCells, queue_size=1)
+    pubPath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
