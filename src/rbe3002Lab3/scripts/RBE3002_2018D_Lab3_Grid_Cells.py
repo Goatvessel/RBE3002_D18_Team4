@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# Imports
 import rospy
 from nav_msgs.msg import GridCells
 from std_msgs.msg import String

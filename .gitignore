@@ -11,6 +11,8 @@
 # Ignore everything in the root except the "src" directory.
 /*
 !.gitignore
+!ScriptTips.txt
+!README.md
 !src/
 
 # Ignore everything in the "src" directory, except the Packages
