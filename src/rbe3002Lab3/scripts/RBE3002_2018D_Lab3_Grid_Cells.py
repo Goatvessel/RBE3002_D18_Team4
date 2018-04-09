@@ -3,9 +3,12 @@
 import rospy
 from nav_msgs.msg import GridCells
 from std_msgs.msg import String
+from nav_msgs.msg import Path
 from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry, OccupancyGrid
 from kobuki_msgs.msg import BumperEvent
+from tf.transformations import euler_from_quaternion
+from tf.transformations import quaternion_from_euler
 import tf
 import numpy
 import math
@@ -44,8 +47,8 @@ def getIndex(xPos,yPos):
 
 #Function returns x and y given index
 def getXY(index):
-    y = index//width
-    x = index%width
+    y = (index//width)*resolution+offsetY + (0.5 * resolution)
+    x = (index%width)*resolution+offsetX + (0.5 * resolution)
     return x, y
 
 def generateGridCells(indexList,height=0):
@@ -65,8 +68,8 @@ def generateGridCells(indexList,height=0):
 def getNeighbors(index):
     tempNeighborIndices = [] #temporary neighnours
     neighborIndices = []     #Final neighbour list
-    tempNeighborIndices.append(index+37) #to get the cell beneath current cell
-    tempNeighborIndices.append(index-37) #to get the cell above current cell
+    tempNeighborIndices.append(index+width) #to get the cell beneath current cell
+    tempNeighborIndices.append(index-width) #to get the cell above current cell
     tempNeighborIndices.append(index-1)  #to get the cell to the left of current cell
     tempNeighborIndices.append(index+1)  #to get the cell to the right of current cell
     for temp in tempNeighborIndices:
@@ -94,7 +97,7 @@ def readGoal(goal):
     goalCell = getIndex(goalX,goalY) #call getIndex function to get the index of goal cell
     print("Goal Index: ",goalCell)
     goalIndex.append(getIndex(goalX,goalY))
-    cells = generateGridCells(goalIndex,3) #generates goal cell of height 3 i.e highest priority
+    cells = generateGridCells(goalIndex,7) #generates goal cell of height 3 i.e highest priority
     goalPub.publish(cells) #publishes goal cell
     aStar(startCell,goalCell) #calls astar
     print goal.pose
@@ -112,7 +115,7 @@ def readStart(startPos):
     startCell = getIndex(startPosX,startPosY)  #call getIndex function to get the index of goal cell
     print("Start Index: ",startCell)
     startIndex.append(getIndex(startPosX,startPosY))
-    cells = generateGridCells(startIndex,3) #generates start cell of height 3 i.e highest priority
+    cells = generateGridCells(startIndex,7) #generates start cell of height 3 i.e highest priority
     startPub.publish(cells)
 
     #howdyNeighbors = getNeighbors(getIndex(startPosX,startPosY))
@@ -125,7 +128,13 @@ def readStart(startPos):
 
 def aStar(start,goal):
     # Send blank messages to clear rviz
-    pathPub.publish(generateGridCells([]))
+    gridPathPub.publish(generateGridCells([]))
+    wayGridPub.publish(generateGridCells([]))
+    blankPath = Path()
+    blankPath.header.frame_id = 'map'
+    #blankPose = Pose()
+    #blankPath.pose = [blankPose]
+    wayPathPub.publish(blankPath)
 
 
     frontier = PriorityQueue()
@@ -143,10 +152,6 @@ def aStar(start,goal):
         print("CURRENT INDEX: ",currentIndex," Current F Score: ",currentFScore)
         openSet.append(currentIndex)
         frontierList.remove(currentIndex)
-
-
-
-
 
         if currentIndex == goal:
             break
@@ -167,8 +172,6 @@ def aStar(start,goal):
                 parent.update({neighbor:currentIndex})
                 #print(frontierList)
 
-
-
         rospy.sleep(.01)
         #frontierList = list(frontier.queue)
         frontierCells = generateGridCells(frontierList)
@@ -177,31 +180,81 @@ def aStar(start,goal):
         openSetPub.publish(generateGridCells(openSet))
         frontierPub.publish(frontierCells)
 
-        currentIndexPub.publish(currentIndexCells)
-
 
     print("A WINNER IS YOU")
-    pathList = []
-    pboi = parent[goal]
-    while (parent[pboi] != start):
-        pathList.append(pboi)
-        pboi = parent[pboi]
-    pathList.append(pboi)
+
+    pathList = [goal]
+    parentIndex = parent[goal]
+    while (parent[parentIndex] != start):
+        pathList.append(parentIndex)
+        parentIndex = parent[parentIndex]
+    pathList.append(parentIndex)
 
     pathCells = generateGridCells(pathList,2)
     currentIndexPub.publish(generateGridCells([]))
-    pathPub.publish(pathCells)
+    gridPathPub.publish(pathCells)
+
+    # To plot the wavepoints
+    #currentwavepoint = getXY(start) #get current wavepoint that is start point
+    waypointList = [start] #list of wavepoints in x,y
+    pathListXY = [] # Path list in xy with start and goal also included
+    lastNodeXY = start
+
+    for i in range (1, len(pathList)+1):
+        pathListXY.append(pathList[-i])
+
+    for nodeXY in pathListXY:
+        if (getXY(nodeXY)[0] != getXY(waypointList[-1])[0] and getXY(nodeXY)[1] != getXY(waypointList[-1])[1]):
+            print("Current X: ", getXY(nodeXY)," WP X: ",getXY(waypointList[-1])[0])
+            print("Current Y: ", getXY(nodeXY)," WP Y: ",getXY(waypointList[-1])[1])
+            waypointList.append(lastNodeXY)
+        lastNodeXY = nodeXY
+    if goal not in waypointList:
+        waypointList.append(goal)
+
+        waypointGridCells = generateGridCells(waypointList,5)
+        currentIndexPub.publish(generateGridCells([]))
+        wayGridPub.publish(waypointGridCells)
+    rospy.sleep(.001)
+    currentIndexPub.publish(currentIndexCells)
+
+    wayPoses = []
+    for waypoint in range(1,len(waypointList)):
+        lastPose = PoseStamped()
+        lastPose.header.frame_id = 'map'
+
+        lastXY = getXY(waypointList[waypoint-1])
+        #print(lastXY)
+        lastxCoord = lastXY[0]
+        lastyCoord = lastXY[1]
+        #print(lastxCoord)
+
+        currentXY = getXY(waypointList[waypoint])
+        currentxCoord = currentXY[0]
+        currentyCoord = currentXY[1]
+
+        lastPose.pose.position.x = lastxCoord
+        lastPose.pose.position.y = lastyCoord
+        lastPose.pose.position.z = 0
+        theta = math.atan2(currentyCoord-lastyCoord,currentxCoord-lastxCoord)
+        print(theta*180/math.pi)
+
+        (roll, pitch, yaw) = (0, 0, theta)
+        q = quaternion_from_euler(roll, pitch, yaw)
+        lastPose.pose.orientation.x = q[0]
+        lastPose.pose.orientation.y = q[1]
+        lastPose.pose.orientation.z = q[2]
+        lastPose.pose.orientation.w = q[3]
+
+        wayPoses.append(lastPose)
+        #print(wayPoses)
+        wayPath = Path()
+        wayPath.header.frame_id = 'map'
+        wayPath.poses = wayPoses
+        #print(wayPath)
+    wayPathPub.publish(wayPath)
 
 
-    #parent.update({node:myParent})
-
-
-    # generate a path to the start and end goals by searching through the neighbors, refer to aStar_explanied.py
-
-    # for each node in the path, process the nodes to generate GridCells and Path messages
-
-
-    # Publish points
 
 #publishes map to rviz using gridcells type
 
@@ -247,7 +300,9 @@ def run():
     global frontierPub
     global openSetPub
     global currentIndexPub
-    global pathPub
+    global gridPathPub
+    global wayGridPub
+    global wayPathPub
     wallIndices = []
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
@@ -257,9 +312,9 @@ def run():
     frontierPub = rospy.Publisher("/frontier", GridCells, queue_size=1)
     openSetPub = rospy.Publisher("/openSet", GridCells, queue_size=1)
     currentIndexPub = rospy.Publisher("/currentIndex", GridCells, queue_size=1)
-    pathPub = rospy.Publisher("/realPath", GridCells, queue_size=1)
-    pubPath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
-    pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
+    gridPathPub = rospy.Publisher("/realPath", GridCells, queue_size=1) # Gridcell path from start to end
+    wayPathPub = rospy.Publisher("/wayPath", Path, queue_size=1) # Path path of waypoints from start to end
+    wayGridPub = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
 
