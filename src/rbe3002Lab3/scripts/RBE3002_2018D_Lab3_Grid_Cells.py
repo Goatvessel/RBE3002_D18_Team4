@@ -16,9 +16,10 @@ import rospy, tf, numpy, math
 from Queue import PriorityQueue
 
 
-
-
-# reads in global map
+# -------------------- Helper Functions ------------------------------ #
+# Function: Map Callback
+# Input: Global Map
+# Operation: Reads in global map
 def mapCallBack(data):
     global mapData
     global width
@@ -36,7 +37,9 @@ def mapCallBack(data):
     offsetY = data.info.origin.position.y
     print data.info
 
-# Function returns index given x and y
+# Function: Returns Index given X and Y Map Coordinate
+# Input: X Coordinate, Y Coordinate
+# Output: Map Index
 def getIndex(xPos,yPos):
     xPos = xPos
     yPos = yPos
@@ -45,12 +48,17 @@ def getIndex(xPos,yPos):
     index = int(y*width + x)
     return index
 
-#Function returns x and y given index
+# Function: returns X and Y Map Coordinate given Map Index
+# Input: Map Index
+# Output: X Coordinate, Y Coordinate
 def getXY(index):
     y = (index//width)*resolution+offsetY + (0.5 * resolution)
     x = (index%width)*resolution+offsetX + (0.5 * resolution)
     return x, y
 
+# Function: Generate GridCells Message from a list of indices
+# Input: List of Map Indices, (Optional) height
+# Output: Gridcells
 def generateGridCells(indexList,height=0):
     cells=GridCells()
     cells.header.frame_id = 'map'
@@ -64,7 +72,9 @@ def generateGridCells(indexList,height=0):
         cells.cells.append(point)
     return cells
 
-#function to get neighbour cells
+# Function: Get neighbor cells of given cell
+# Input: Map Index
+# Output: List of Map Indices
 def getNeighbors(index):
     tempNeighborIndices = [] #temporary neighnours
     neighborIndices = []     #Final neighbour list
@@ -77,7 +87,9 @@ def getNeighbors(index):
             neighborIndices.append(temp) #generates a final list of neighbour indices excluding all wall cells
     return neighborIndices
 
-#Function takes in start and goal and returns the euclidean distance
+# Function: Calculate Euclidean distance between two Map Indices
+# Input: Start Map Index, Goal Map Index
+# Output: Float
 def getEuclidean(start,goal):
     startX, startY = getXY(start) #calls getXY function to get x and y values of start
     goalX, goalY = getXY(goal)    # and goal
@@ -86,6 +98,9 @@ def getEuclidean(start,goal):
     distance = math.sqrt(pow(x_distance,2)+pow(y_distance,2)) #distance formula
     return distance
 
+# Function: Extract Goal Index for Pathfinding
+# Input: Goal Pose Message
+# Output: Run Pathfinding
 def readGoal(goal):
     global goalX
     global goalY
@@ -95,13 +110,17 @@ def readGoal(goal):
     goalY= goal.pose.position.y
     goalIndex = []
     goalCell = getIndex(goalX,goalY) #call getIndex function to get the index of goal cell
-    print("Goal Index: ",goalCell)
+    #print("Goal Index: ",goalCell)
     goalIndex.append(getIndex(goalX,goalY))
     cells = generateGridCells(goalIndex,7) #generates goal cell of height 3 i.e highest priority
     goalPub.publish(cells) #publishes goal cell
-    aStar(startCell,goalCell) #calls astar
-    print goal.pose
+    #aStar(startCell,goalCell) #calls astar
+    #print goal.pose
+    pathFinding()
 
+# Function: Extract Start Index for Pathfinding
+# Input: Start Pose Message
+# Output: Run Pathfinding
 def readStart(startPos):
     global startPosX
     global startPosY
@@ -113,19 +132,30 @@ def readStart(startPos):
     startPosY = startPos.pose.pose.position.y
     startIndex = []
     startCell = getIndex(startPosX,startPosY)  #call getIndex function to get the index of goal cell
-    print("Start Index: ",startCell)
+    #print("Start Index: ",startCell)
     startIndex.append(getIndex(startPosX,startPosY))
     cells = generateGridCells(startIndex,7) #generates start cell of height 3 i.e highest priority
     startPub.publish(cells)
-
     #howdyNeighbors = getNeighbors(getIndex(startPosX,startPosY))
     #neighborCells = generateGridCells(howdyNeighbors)
     #frontierPub.publish(neighborCells)
+    #print startPos.pose.pose
+    pathFinding()
 
+# Function: Perform all aspects of pathfinding - !FIXME list these
+def pathFinding():
+    if (startCell is not None and goalCell is not None):
+        pathList = aStar(startCell,goalCell)
+        #print(pathList)
+        waypointList = waypoints(pathList)
+        #print(waypointList)
+        wayPath = wayposes(waypointList)
+    else:
+        print("Select a START and END pose")
 
-    print startPos.pose.pose
-
-
+# Function: A* (A-Star) path planning algorithm
+# Input: Start Index, Goal Index
+# Output: List of Indices
 def aStar(start,goal):
     # Send blank messages to clear rviz
     gridPathPub.publish(generateGridCells([]))
@@ -149,7 +179,7 @@ def aStar(start,goal):
         currentTuple = frontier.get()
         currentFScore = currentTuple[0]
         currentIndex = currentTuple[1]
-        print("CURRENT INDEX: ",currentIndex," Current F Score: ",currentFScore)
+        #print("CURRENT INDEX: ",currentIndex," Current F Score: ",currentFScore)
         openSet.append(currentIndex)
         frontierList.remove(currentIndex)
 
@@ -157,12 +187,12 @@ def aStar(start,goal):
             break
 
         neighbors = getNeighbors(currentIndex)
-        print(neighbors)
+        #print(neighbors)
         for neighbor in neighbors:
             if (neighbor not in cost) or (cost[neighbor] > cost[currentIndex] + 1):
                 #print(neighbor)
                 gScore = cost[currentIndex]+1
-                print(gScore)
+                #print(gScore)
                 hScore = getEuclidean(neighbor,goal)
                 fScore = gScore + hScore
                 #print("currentIndex: ",currentIndex," Neighbor: ",neighbor," F Score",fScore)
@@ -172,7 +202,7 @@ def aStar(start,goal):
                 parent.update({neighbor:currentIndex})
                 #print(frontierList)
 
-        rospy.sleep(.01)
+        rospy.sleep(.01) # Delay for visual effect
         #frontierList = list(frontier.queue)
         frontierCells = generateGridCells(frontierList)
         currentIndexCells = generateGridCells([currentIndex], 1)
@@ -181,7 +211,7 @@ def aStar(start,goal):
         frontierPub.publish(frontierCells)
 
 
-    print("A WINNER IS YOU")
+    #print("A WINNER IS YOU")
 
     pathList = [goal]
     parentIndex = parent[goal]
@@ -193,30 +223,39 @@ def aStar(start,goal):
     pathCells = generateGridCells(pathList,2)
     currentIndexPub.publish(generateGridCells([]))
     gridPathPub.publish(pathCells)
+    return pathList
 
-    # To plot the wavepoints
-    #currentwavepoint = getXY(start) #get current wavepoint that is start point
-    waypointList = [start] #list of wavepoints in x,y
-    pathListXY = [] # Path list in xy with start and goal also included
-    lastNodeXY = start
+# Function: Generates a list of waypoints from a path
+# Input: List of Indices
+# Output: List of Indices
+def waypoints(indexList):
+    waypointList = [startCell] # List of Waypoints as Map Indices
+    pathList = [] # Path list from start index to goal index
+    lastNode = startCell
 
-    for i in range (1, len(pathList)+1):
-        pathListXY.append(pathList[-i])
+    for i in range (1, len(indexList)+1):
+        pathList.append(indexList[-i])
 
-    for nodeXY in pathListXY:
-        if (getXY(nodeXY)[0] != getXY(waypointList[-1])[0] and getXY(nodeXY)[1] != getXY(waypointList[-1])[1]):
-            print("Current X: ", getXY(nodeXY)," WP X: ",getXY(waypointList[-1])[0])
-            print("Current Y: ", getXY(nodeXY)," WP Y: ",getXY(waypointList[-1])[1])
-            waypointList.append(lastNodeXY)
-        lastNodeXY = nodeXY
-    if goal not in waypointList:
-        waypointList.append(goal)
+    for node in pathList:
+        if (getXY(node)[0] != getXY(waypointList[-1])[0] and getXY(node)[1] != getXY(waypointList[-1])[1]):
+            #print("Current X: ", getXY(node)," WP X: ",getXY(waypointList[-1])[0])
+            #print("Current Y: ", getXY(node)," WP Y: ",getXY(waypointList[-1])[1])
+            waypointList.append(lastNode)
+        lastNode = node
 
-        waypointGridCells = generateGridCells(waypointList,5)
-        currentIndexPub.publish(generateGridCells([]))
-        wayGridPub.publish(waypointGridCells)
-    rospy.sleep(.001)
-    currentIndexPub.publish(currentIndexCells)
+    if goalCell not in waypointList:
+        waypointList.append(goalCell)
+
+    waypointGridCells = generateGridCells(waypointList,5)
+    currentIndexPub.publish(generateGridCells([]))
+    wayGridPub.publish(waypointGridCells)
+    #currentIndexPub.publish(currentIndexCells)
+    return waypointList
+
+# Function: Generate a Path Message from a list of waypoints
+# Input: List of Map Indices
+# OutputL Path Message
+def wayposes(waypointList):
 
     wayPoses = []
     for waypoint in range(1,len(waypointList)):
@@ -237,7 +276,7 @@ def aStar(start,goal):
         lastPose.pose.position.y = lastyCoord
         lastPose.pose.position.z = 0
         theta = math.atan2(currentyCoord-lastyCoord,currentxCoord-lastxCoord)
-        print(theta*180/math.pi)
+        #print(theta*180/math.pi)
 
         (roll, pitch, yaw) = (0, 0, theta)
         q = quaternion_from_euler(roll, pitch, yaw)
@@ -253,6 +292,8 @@ def aStar(start,goal):
         wayPath.poses = wayPoses
         #print(wayPath)
     wayPathPub.publish(wayPath)
+    return wayPath
+
 
 
 
@@ -303,6 +344,9 @@ def run():
     global gridPathPub
     global wayGridPub
     global wayPathPub
+    global startCell
+    global goalCell
+
     wallIndices = []
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
@@ -317,6 +361,10 @@ def run():
     wayGridPub = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
+
+    startCell = None
+    goalCell = None
+
 
     # wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
