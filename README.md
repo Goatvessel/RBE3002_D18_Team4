@@ -10,6 +10,12 @@
 ```
 
 ## Team Members:
+'''
+ /\  _  _| _ _  | _  _  _ _. _ |.
+/--\| )(_|| (-  |||||_)(-| |(_|||
+                    |             
+'''
+
 ### Ioannis Alexiou
 ### Andre Imperiali
 ### Krishna Madhurkar
