@@ -18,4 +18,5 @@
 # Ignore everything in the "src" directory, except the Packages
 src/*
 !src/rbe3002Lab3/
+!src/rbe3002Lab4/
 !src/CMakeLists.txt
