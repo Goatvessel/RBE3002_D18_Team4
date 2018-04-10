@@ -116,7 +116,8 @@ def generateGridCells(indexList,height=0):
 # Output: List of Map Indices
 def getNeighbors(index):
     neighborIndices = []
-    neighborOffsets = [-1,1,-width,width]
+    #neighborOffsets = [-1,1,-width,width]
+    neighborOffsets = [-1,1,-width,width,-width-1,-width+1,width-1,width+1]
     for offset in neighborOffsets:
         neighborIndex = index+offset
         if neighborIndex not in wallIndices:
@@ -230,7 +231,7 @@ def aStar(start,goal):
         # Update F-score of neighbors that have a better parent (lower G-Score)
         for neighbor in neighbors:
             if (neighbor not in cost) or (cost[neighbor] > cost[currentIndex] + 1):
-                gScore = cost[currentIndex]+1
+                gScore = cost[currentIndex]+getEuclidean(neighbor,currentIndex)
                 hScore = getEuclidean(neighbor,goal)
                 fScore = gScore + hScore
                 cost.update({neighbor:gScore})
