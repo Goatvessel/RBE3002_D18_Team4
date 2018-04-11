@@ -71,7 +71,7 @@ def publishCells(grid):
                 # Store a list of Wall Indices - for checking neighbors
                 if index not in wallIndices:
                     wallIndices.append(index)
-            k = k + 1
+            k = k 
     # Display walls in rviz
     mapPub.publish(cells)
 
@@ -230,8 +230,8 @@ def aStar(start,goal):
         # Add neighbors to the frontier if they haven't been seen before
         # Update F-score of neighbors that have a better parent (lower G-Score)
         for neighbor in neighbors:
-            if (neighbor not in cost) or (cost[neighbor] > cost[currentIndex] + 1):
-                gScore = cost[currentIndex]+getEuclidean(neighbor,currentIndex)
+            gScore = cost[currentIndex]+getEuclidean(neighbor,currentIndex)
+            if (neighbor not in cost) or (cost[neighbor] > gScore ):
                 hScore = getEuclidean(neighbor,goal)
                 fScore = gScore + hScore
                 cost.update({neighbor:gScore})
