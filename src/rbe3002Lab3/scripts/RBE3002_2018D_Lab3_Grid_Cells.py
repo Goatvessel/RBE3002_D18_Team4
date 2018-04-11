@@ -71,7 +71,7 @@ def publishCells(grid):
                 # Store a list of Wall Indices - for checking neighbors
                 if index not in wallIndices:
                     wallIndices.append(index)
-            k = k 
+            k = k + 1
     # Display walls in rviz
     mapPub.publish(cells)
 
