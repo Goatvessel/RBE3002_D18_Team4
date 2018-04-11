@@ -275,12 +275,12 @@ def waypoints(indexList):
         pathList.append(indexList[-i])
 
     # Generate list of indices that require a change in orientation
-    for node in pathList:
-        if (getXY(node)[0] != getXY(waypointList[-1])[0] and getXY(node)[1] != getXY(waypointList[-1])[1]):
-            #print("Current X: ", getXY(node)," WP X: ",getXY(waypointList[-1])[0])
-            #print("Current Y: ", getXY(node)," WP Y: ",getXY(waypointList[-1])[1])
-            waypointList.append(lastNode)
-        lastNode = node
+    for i in range(0,len(pathList)):
+        pass #!FIXME 
+        # #print("Current X: ", getXY(node)," WP X: ",getXY(waypointList[-1])[0])
+        #     #print("Current Y: ", getXY(node)," WP Y: ",getXY(waypointList[-1])[1])
+        # waypointList.append(lastNode)
+        # lastNode = node
 
     # Add goalCell to the list of waypoints if it was not there previously
     if goalCell not in waypointList:
