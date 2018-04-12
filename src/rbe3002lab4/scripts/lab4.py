@@ -40,10 +40,118 @@ def mapCallBack(data):
     print("Map Loaded")
     #print data.info
 
+
 # Function: Publish Map to rviz using GridCells type
 # Input: OccupancyGrid.data
 def publishCells(grid):
     global wallIndices
+
+    # Initialize variables
+    cells = GridCells()
+    cells.header.frame_id = 'map'
+    cells.cell_width = resolution
+    cells.cell_height = resolution
+    k = 0
+
+    for i in range(0,height):
+        for j in range(0,width):
+                if (grid[k] > 50):
+                    indexChecklist = getThiccIndex(k)
+                    for index in indexChecklist:
+                        if index not in wallIndices:
+                            wallIndices.append(index)
+                k = k + 1
+    wallPoints = getPointsFromIndicies(wallIndices)
+    print("Length of wallPoints: ",len(wallIndices))
+    for point in wallPoints:
+        outPoint = Point()
+        outPoint.x = point[0]
+        outPoint.y = point[1]
+        outPoint.z = 0
+
+        cells.cells.append(outPoint)
+        #print(point)
+    mapPub.publish(cells)
+
+
+
+
+    # for i in range(0,height): #height should be set to hieght of grid
+    #     for j in range(0,width): #width should be set to width of grid
+    #
+    #         # grid values are probability percentages of occupancy. The following condition gives all the cells where
+    #         # occupancy probability is more than 50%
+    #         if (grid[k] > 50):
+    #
+    #             point=Point()
+    #             # 0.5*resolution moves the point to the center of the grid cell
+    #             point.x=(j*resolution)+offsetX + (0.5 * resolution)
+    #             point.y=(i*resolution)+offsetY + (0.5 * resolution)
+    #             point.z=0
+    #             listOfPoints = getThicc(point)
+    #             print("Length of list: ",len(listOfPoints))
+    #             for pointy in listOfPoints:
+    #                 print("Length of Cells: ",len(cells.cells))
+    #                 if pointy not in cells.cells:
+    #                     cells.cells.append(pointy)
+    #                 print("Length of Cells: ",len(cells.cells))
+    #             # cells.cells.append(point)
+    #             index = i*width+j
+    #
+    #             indexChecklist = getThiccIndex(index)
+    #
+    #             # Store a list of Wall Indices - for checking neighbors
+    #             for indexCheck in indexChecklist:
+    #                 if indexCheck not in wallIndices:
+    #                     wallIndices.append(indexCheck)
+    #         k = k + 1
+    # Display walls in rviz
+
+def getPointsFromIndicies(wallIndices):
+    listOfPoints = []
+    for index in wallIndices:
+        listOfPoints.append(getXY(index))
+    return listOfPoints
+
+
+
+def getThicc(point):
+    pX = point.x
+    pY = point.y
+    listOfPoints = []
+    for i in range(-3,4):
+        for j in range(-3,4):
+            newPointX = pX + i*resolution
+            newPointY = pY + j*resolution
+            point.x = newPointX
+            point.y = newPointY
+            listOfPoints.append(point)
+    return listOfPoints
+
+def getThiccIndex(index):
+    indexChecklist = []
+    for i in range(-2,3):
+        for j in range(-2,3):
+            newIndex = index + width*j + i
+            if newIndex not in indexChecklist:
+                indexChecklist.append(newIndex)
+                print(len(indexChecklist))
+    return indexChecklist
+
+
+
+
+
+
+
+
+
+
+# Function: Publish Map to rviz using GridCells type
+# Input: OccupancyGrid.data
+def publishCells01(grid):
+    global wallIndices
+    global thicc
 
     # Initialize variables
     k=0
@@ -58,18 +166,21 @@ def publishCells(grid):
             # grid values are probability percentages of occupancy. The following condition gives all the cells where
             # occupancy probability is more than 50%
             if (grid[k] > 50):
-
-                point=Point()
-                # 0.5*resolution moves the point to the center of the grid cell
-                point.x=(j*resolution)+offsetX + (0.5 * resolution)
-                point.y=(i*resolution)+offsetY + (0.5 * resolution)
-                point.z=0
-                cells.cells.append(point)
                 index = i*width+j
-
-                # Store a list of Wall Indices - for checking neighbors
-                if index not in wallIndices:
-                    wallIndices.append(index)
+                point=Point()
+                point.z=0
+                # 0.5*resolution moves the point to the center of the grid cell
+                wallX = (j*resolution)+offsetX + (0.5 * resolution)
+                wallY = (i*resolution)+offsetY + (0.5 * resolution)
+                for k in range(0,6):
+                    for m in range(0,6):
+                        point.x = wallX + (k-3)*resolution
+                        point.y= wallY + (m-3)*resolution
+                        cells.cells.append(point)
+                        indexCheck = index + width*m + k
+                        # Store a list of Wall Indices - for checking neighbors
+                        if indexCheck not in wallIndices:
+                            wallIndices.append(indexCheck)
             k = k + 1
     # Display walls in rviz
     mapPub.publish(cells)
@@ -276,7 +387,7 @@ def waypoints(indexList):
 
     # Generate list of indices that require a change in orientation
     for i in range(0,len(pathList)):
-        pass #!FIXME 
+        pass #!FIXME
         # #print("Current X: ", getXY(node)," WP X: ",getXY(waypointList[-1])[0])
         #     #print("Current Y: ", getXY(node)," WP Y: ",getXY(waypointList[-1])[1])
         # waypointList.append(lastNode)
@@ -636,13 +747,15 @@ def run():
     global startCell
     global goalCell
     global wallIndices
+    global thicc
 
     # Initialize Variables
     wallIndices = []
     startCell = None
     goalCell = None
+    thicc = 2
     print("")
-    print(" RBE 3002 D18 Lab 3")
+    print(" RBE 3002 D18 Lab 4")
     print("")
     print("Initializing Pubs and Subs")
 
