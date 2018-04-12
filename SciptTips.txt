@@ -1,9 +1,63 @@
-Bashrc:
+Bashrc 2.0:
+source /opt/ros/kinetic/setup.bash
+source /adhome/aimperiali/catkin_ws/devel/setup.bash
+export PS1="\[\033[38;5;11m\]\u\[$(tput sgr0)\]\[\033[38;5;15m\]@\h:\[$(tput sgr0)\]\[\033[38;5;6m\][\w]:\[$(tput sgr0)\]\[\033[38;5;15m\] \[$(tput sgr0)\]"
+export ROS_HOSTNAME=ak120d-05.wpi.edu
+export TURTLEBOT3_MODEL=burger
+export EDITOR="atom"
+export VISUAL="atom"
+
+# Run rviz configuration
+alias lab3_rviz="rosrun rviz rviz -d `rospack find rbe3002Lab3`/rviz/Lab3Maze.rviz"
+alias lab4_rviz="rosrun rviz rviz -d `rospack find rbe3002lab4`/rviz/Lab4Maze.rviz"
+
+# Run map server
+alias MAP3_simplemap="rosrun map_server map_server `rospack find rbe3002Lab3`/stagemaps/simple_map.yaml"
+alias MAP4_Lab-4="rosrun map_server map_server `rospack find rbe3002lab4`/stagemaps/turtlebot3_world.yaml"
+
+# Launch lab code
+alias labrun3="rosrun rbe3002lab3 RBE3002_2018D_Lab3_Grid_Cells.py"
+alias labrun4="rosrun rbe3002lab4 lab4.py"
+
+# Commit
+cmmt() { "git" "commit" "-a" "-m" "$1";  }
+
+
+
+Terminator:
+Window
+ Vertical split =
+   = Vertical split +
+    + Vertical split *
+      * Horizontal split -
+         - Terminal [3,2]: source .bashrc; echo "MAP3_simplemap"; echo "MAP4_Lab-4"; echo "- - - - - - - - -"; bash
+         - Terminal [3,1]: source .bashrc; cd catkin_ws/src/; ls; echo "- - - - - - - - -"; bash
+      * Terminal [4,1]: source .bashrc; cd catkin_ws/; atom . ./src/rbe3002lab4/scripts/lab4.py; ls; echo "- - - - - - - - -"; bash
+    + Horizontal split *
+      * Terminal [2,2]:source .bashrc; echo "lab3_rviz"; echo "lab4_rviz"; echo "- - - - - - - - -"; bash;
+      * Terminal [2,1]:source .bashrc; echo "labrun3"; echo "labrun4"; echo "- - - - - - - - -"; bash
+   = Horizontal split +
+    + Terminal [1,2]:source .bashrc; echo "killall -9 roscore"; echo "killall -9 rosmaster"; echo "- - - - - - - - -"; bash
+    + Terminal [1,1]: source .bashrc; roscore; bash
+
+
+
+
+
+
+
+
+
+
+
+Bashrc basic:
 export TURTLEBOT3_MODEL=burger
 export EDITOR="atom"
 export VISUAL="atom"
 alias lab4_rviz="rosrun rviz rviz -d `rospack find rbe3002`/rviz/Lab4Maze.rviz"
 alias simpleMap="rosrun map_server map_server `rospack find rbe3002`/stagemaps/simple_map.yaml"
+
+
 
 
 
