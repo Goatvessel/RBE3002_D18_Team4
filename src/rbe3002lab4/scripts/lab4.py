@@ -164,19 +164,36 @@ def getXY(index):
     x = (index%width)*resolution+offsetX + (0.5 * resolution)
     return x, y
 
+def getAngleBetweenIndices(startIndex,goalIndex):
+    pass
+
 # Function: Converts a Pose message into a list of
 # Input: Pose() Message
 # Output: [X-Position, Y-Position, Yaw]
 def convertPose(myPose):
-    #
-    # Where Yaw is the rotation about the Z-Axis
-    q = [myPose.pose.orientation.x, #!FIXME PoseWithCovarianceStamped -> orientation
-		myPose.pose.orientation.y,
-		myPose.pose.orientation.z,
-		myPose.pose.orientation.w]
+    print(type(myPose))
+    typePoseCove = type(PoseWithCovarianceStamped())
+    typePoseStamp = type(PoseStamped())
+    typePose = type(myPose)
+    if typePose == typePoseCove:
+        #
+        # Where Yaw is the rotation about the Z-Axis
+        q = [myPose.pose.pose.orientation.x,
+    		myPose.pose.pose.orientation.y,
+    		myPose.pose.pose.orientation.z,
+    		myPose.pose.pose.orientation.w]
+        xPos = myPose.pose.pose.position.x
+        yPos = myPose.pose.pose.position.y
+    elif typePose == typePoseStamp:
+        q = [myPose.pose.orientation.x,
+    		myPose.pose.orientation.y,
+    		myPose.pose.orientation.z,
+    		myPose.pose.orientation.w]
+        xPos = myPose.pose.position.x
+        yPos = myPose.pose.position.y
+
     (roll, pitch, yaw) = euler_from_quaternion(q)
-    xPos = myPose.pose.position.x
-    yPos = myPose.pose.position.y
+
     return [xPos, yPos, yaw]
 
 # Function: Generate GridCells Message from a list of indices
@@ -227,7 +244,7 @@ def readGoal(goalPose):
     global goalYaw
     goalIndex = []
     (goalX, goalY, goalYaw) = convertPose(goalPose)
-    goalCell = getIndex(goalX,goalYstartY) #call getIndex function to get the index of goal cell
+    goalCell = getIndex(goalX,goalY) #call getIndex function to get the index of goal cell
     #print("Goal Index: ",goalCell)
     goalIndex.append(goalCell)
     cells = generateGridCells(goalIndex,7) #generates goal cell of height 3 i.e highest priority
@@ -246,7 +263,7 @@ def readStart(startPose):
     startIndex = []
 
     (startX, startY, startYaw) = convertPose(startPose)
-    startCell = getIndex(startX,startY,startYaw)  #call getIndex function to get the index of goal cell
+    startCell = getIndex(startX,startY)  #call getIndex function to get the index of goal cell
     #print("Start Index: ",startCell)
     startIndex.append(startCell)
     cells = generateGridCells(startIndex,7) #generates start cell of height 3 i.e highest priority
@@ -365,11 +382,26 @@ def waypoints(indexList):
     for i in range (1, len(indexList)+1):
         pathList.append(indexList[-i])
 
-    # Generate list of indices that require a change in orientation
-    for i in range(0,len(pathList)):
-        # If the angle between current pose and next movement is noticable
-        pass
+    N=math.pi/2
+    NE=math.pi/4
+    E=0
+    SE=-math.pi/4
+    S=-math.pi/2
+    SW=-3*math.pi/4
+    W=math.pi
+    NW=3*math.pi/4
 
+
+    # Generate list of indices that require a change in orientation
+    for i in range(1,len(pathList)-1):
+        # If the angle between current pose and next movement is noticable
+        (lastX, lastY) = getXY(pathList[i-1])
+        (startX, startY) = getXY(pathList[i])
+        (nextX, nextY) = getXY(pathList[i+1])
+        angleBetweenLastStart = math.atan2(startY-lastY,startX-lastX)
+        angleBetweenStartNext = math.atan2(nextY-startY,nextX-startX)
+        if (abs(angleBetweenLastStart - angleBetweenStartNext) > .2):
+            waypointList.append(pathList[i])
 
         # #print("Current X: ", getXY(node)," WP X: ",getXY(waypointList[-1])[0])
         #     #print("Current Y: ", getXY(node)," WP Y: ",getXY(waypointList[-1])[1])
