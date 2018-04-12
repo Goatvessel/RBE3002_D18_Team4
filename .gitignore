@@ -20,3 +20,4 @@ src/*
 !src/rbe3002Lab3/
 !src/rbe3002lab4/
 !src/CMakeLists.txt
+!src/rbe3002lab4/rviz/Lab4Chill.rviz
