@@ -42,6 +42,10 @@ def mapCallBack(data):
     getGridUpdate(mapData)
     #print data.info
 
+# This is a new function
+def newFunction(arg1, arg2, arg3):
+    return arg1 + arg2 + arg3
+
 # Function: Publish Map to rviz using GridCells type
 # Input: OccupancyGrid.data
 def publishCells(grid):
