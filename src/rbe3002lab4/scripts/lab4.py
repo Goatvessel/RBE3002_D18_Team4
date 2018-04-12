@@ -40,7 +40,6 @@ def mapCallBack(data):
     print("Map Loaded")
     #print data.info
 
-
 # Function: Publish Map to rviz using GridCells type
 # Input: OccupancyGrid.data
 def publishCells(grid):
@@ -62,7 +61,7 @@ def publishCells(grid):
                             wallIndices.append(index)
                 k = k + 1
     wallPoints = getPointsFromIndicies(wallIndices)
-    print("Length of wallPoints: ",len(wallIndices))
+    #print("Length of wallPoints: ",len(wallIndices))
     for point in wallPoints:
         outPoint = Point()
         outPoint.x = point[0]
@@ -73,47 +72,11 @@ def publishCells(grid):
         #print(point)
     mapPub.publish(cells)
 
-
-
-
-    # for i in range(0,height): #height should be set to hieght of grid
-    #     for j in range(0,width): #width should be set to width of grid
-    #
-    #         # grid values are probability percentages of occupancy. The following condition gives all the cells where
-    #         # occupancy probability is more than 50%
-    #         if (grid[k] > 50):
-    #
-    #             point=Point()
-    #             # 0.5*resolution moves the point to the center of the grid cell
-    #             point.x=(j*resolution)+offsetX + (0.5 * resolution)
-    #             point.y=(i*resolution)+offsetY + (0.5 * resolution)
-    #             point.z=0
-    #             listOfPoints = getThicc(point)
-    #             print("Length of list: ",len(listOfPoints))
-    #             for pointy in listOfPoints:
-    #                 print("Length of Cells: ",len(cells.cells))
-    #                 if pointy not in cells.cells:
-    #                     cells.cells.append(pointy)
-    #                 print("Length of Cells: ",len(cells.cells))
-    #             # cells.cells.append(point)
-    #             index = i*width+j
-    #
-    #             indexChecklist = getThiccIndex(index)
-    #
-    #             # Store a list of Wall Indices - for checking neighbors
-    #             for indexCheck in indexChecklist:
-    #                 if indexCheck not in wallIndices:
-    #                     wallIndices.append(indexCheck)
-    #         k = k + 1
-    # Display walls in rviz
-
 def getPointsFromIndicies(wallIndices):
     listOfPoints = []
     for index in wallIndices:
         listOfPoints.append(getXY(index))
     return listOfPoints
-
-
 
 def getThicc(point):
     pX = point.x
@@ -135,17 +98,8 @@ def getThiccIndex(index):
             newIndex = index + width*j + i
             if newIndex not in indexChecklist:
                 indexChecklist.append(newIndex)
-                print(len(indexChecklist))
+                #print(len(indexChecklist))
     return indexChecklist
-
-
-
-
-
-
-
-
-
 
 # Function: Publish Map to rviz using GridCells type
 # Input: OccupancyGrid.data
@@ -782,6 +736,7 @@ def run():
     while (not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         rospy.sleep(2)
+    print("")
     print("- - End Operation - -")
 
 # Standalone operation
