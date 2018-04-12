@@ -139,6 +139,9 @@ def publishCells01(grid):
     # Display walls in rviz
     mapPub.publish(cells)
 
+def resizeCells(rfactor):
+
+
 
 # ----------------------------- Helper Functions ---------------------------- #
 
