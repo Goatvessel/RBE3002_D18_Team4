@@ -37,6 +37,7 @@ def mapCallBack(data):
     height = data.info.height
     offsetX = data.info.origin.position.x
     offsetY = data.info.origin.position.y
+    resizeCells(data)
     print("Map Loaded")
     #print data.info
 
@@ -144,6 +145,8 @@ def resizeCells(rfactor):
     pass
 
 
+def getGridUpdate()
+
 
 # ----------------------------- Helper Functions ---------------------------- #
 
@@ -199,11 +202,11 @@ def convertPose(myPose):
 # Function: Generate GridCells Message from a list of indices
 # Input: List of Map Indices, (Optional) height
 # Output: Gridcells
-def generateGridCells(indexList,height=0):
+def generateGridCells(indexList, height=0, gridWidth=1, gridHeight=1):
     cells = GridCells()
     cells.header.frame_id = 'map'
-    cells.cell_width = resolution
-    cells.cell_height = resolution
+    cells.cell_width = gridWidth*resolution
+    cells.cell_height = gridHeight*resolution
     for index in indexList:
         point = Point()
         point.x = (index % width) * resolution + offsetX + (0.5 * resolution)
