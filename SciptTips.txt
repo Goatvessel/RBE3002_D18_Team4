@@ -1,3 +1,11 @@
+SSH:
+
+git remote set-url origin git@github.com:RBE300X-Lab/RBE3002_D18_Team_04.git
+
+
+
+
+
 Bashrc 2.0:
 source /opt/ros/kinetic/setup.bash
 source /adhome/aimperiali/catkin_ws/devel/setup.bash
@@ -22,6 +30,8 @@ alias labrun4="rosrun rbe3002lab4 lab4.py"
 # Commit
 cmmt() { "git" "commit" "-a" "-m" "$1";  }
 
+# Push
+psh() { "git" "push"; }
 
 
 Terminator:
