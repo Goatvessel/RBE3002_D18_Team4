@@ -39,6 +39,7 @@ def mapCallBack(data):
     offsetY = data.info.origin.position.y
     resizeCells(data)
     print("Map Loaded")
+    getGridUpdate(mapData)
     #print data.info
 
 # Function: Publish Map to rviz using GridCells type
@@ -103,6 +104,10 @@ def getNearbyIndices(index):
                 #print(len(indexChecklist))
     return indexChecklist
 
+def getSquare(index):
+    pass
+# First pass: width / 3
+
 # Function: Publish Map to rviz using GridCells type
 # Input: OccupancyGrid.data
 def publishCells01(grid):
@@ -145,7 +150,37 @@ def resizeCells(rfactor):
     pass
 
 
-def getGridUpdate()
+def getGridUpdate(grid):
+    global gridIndices
+
+    # Initialize variables
+    cells = GridCells()
+    cells.header.frame_id = 'map'
+    cells.cell_width = resolution
+    cells.cell_height = resolution
+    k = 0
+
+    for i in range(0,height):
+        for j in range(0,width):
+            if (grid[k] < 50):
+                indexChecklist = getNearbyIndices(k)
+                for index in indexChecklist:
+                    if index not in wallIndices:
+                        wallIndices.append(index)
+                k = k + 1
+    gridIndices =
+    wallPoints = getPointsFromIndicies(wallIndices)
+    #print("Length of wallPoints: ",len(wallIndices))
+    for point in wallPoints:
+        outPoint = Point()
+        outPoint.x = point[0]
+        outPoint.y = point[1]
+        outPoint.z = 0
+
+        cells.cells.append(outPoint)
+        #print(point)
+    mapPub.publish(cells)
+
 
 
 # ----------------------------- Helper Functions ---------------------------- #
@@ -221,7 +256,12 @@ def generateGridCells(indexList, height=0, gridWidth=1, gridHeight=1):
 def getNeighbors(index):
     neighborIndices = []
     #neighborOffsets = [-1,1,-width,width]
-    neighborOffsets = [-1,1,-width,width,-width-1,-width+1,width-1,width+1]
+
+    try:
+        pass
+    except e:
+        neighborOffsets = [-1,1,-width,width,-width-1,-width+1,width-1,width+1]
+
     for offset in neighborOffsets:
         neighborIndex = index+offset
         if neighborIndex not in wallIndices:
