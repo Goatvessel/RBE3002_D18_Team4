@@ -23,10 +23,40 @@ from Queue import PriorityQueue
 #           build a visualization of the environment
 # Input: gridData
 # Output: List of Nodes
-def getResizedNodes()
+def getResizedNodes(mapData):
 # Return large gridcell data to approximate the environment with
 # Use this to pathfind between Nodes through their centers and their edges
+    global width
+    global height
+    global resolution
+    global offsetX
+    global offsetY
+
+    index = 0
+    listOfGroups = []
+    listOfNodes = []
+    indicesToCheck = []
+    while (index < width*height):
+
+
+    if (mapData[i] < 50):
+        pass
+
+
     pass
+# def publishCells(grid):
+#     global wallIndices
+#
+#     # Initialize variables
+#     cells = GridCells()
+#     cells.header.frame_id = 'map'
+#     cells.cell_width = resolution
+#     cells.cell_height = resolution
+#     k = 0
+#
+#     for i in range(0,height):
+#         for j in range(0,width):
+#                 if (grid[k] > 50):
 
 
 # ------------------------------ Map Functions ------------------------------ #
@@ -51,7 +81,8 @@ def mapCallBack(data):
     offsetY = data.info.origin.position.y
     resizeCells(data)
     print("Map Loaded")
-    getGridUpdate(mapData)
+    getResizedNodes(mapData)
+    #getGridUpdate(mapData)
     #print data.info
 
 # This is a new function
