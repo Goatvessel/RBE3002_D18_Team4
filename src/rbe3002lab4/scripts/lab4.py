@@ -17,6 +17,18 @@ import math
 import rospy, tf, numpy, math
 from Queue import PriorityQueue
 
+# ------------------------------ WIP Functions ------------------------------ #
+
+# Function: Build a list of resized Nodes with which to pathfind with or
+#           build a visualization of the environment
+# Input: gridData
+# Output: List of Nodes
+def getResizedNodes()
+# Return large gridcell data to approximate the environment with
+# Use this to pathfind between Nodes through their centers and their edges
+    pass
+
+
 # ------------------------------ Map Functions ------------------------------ #
 
 # Function: Map Callback
@@ -172,7 +184,7 @@ def getGridUpdate(grid):
                     if index not in wallIndices:
                         wallIndices.append(index)
                 k = k + 1
-    gridIndices =
+    gridIndices = 1
     wallPoints = getPointsFromIndicies(wallIndices)
     #print("Length of wallPoints: ",len(wallIndices))
     for point in wallPoints:
@@ -261,10 +273,7 @@ def getNeighbors(index):
     neighborIndices = []
     #neighborOffsets = [-1,1,-width,width]
 
-    try:
-        pass
-    except e:
-        neighborOffsets = [-1,1,-width,width,-width-1,-width+1,width-1,width+1]
+    neighborOffsets = [-1,1,-width,width,-width-1,-width+1,width-1,width+1]
 
     for offset in neighborOffsets:
         neighborIndex = index+offset
