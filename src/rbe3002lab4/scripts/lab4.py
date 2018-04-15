@@ -31,13 +31,37 @@ def getResizedNodes(mapData):
     global resolution
     global offsetX
     global offsetY
+    global primes
+
+    # updatePrimes(number)
 
     index = 0
+    i = 0
     listOfGroups = []
     listOfNodes = []
     indicesToCheck = []
+    minWidth = 0
+    maxWidth = minWidth+width
+    minHeight = 0
+    maxHeight = minHeight +height
+    boxWidth = width
+    boxHeight = height
+    currentHeight = 0
+    currentWidth = 0
     while (index < width*height):
+        if (currentHeight%2 != 0):
+            pass
+        elif (currentHeight%4 == 0):
+            start = 0
+        elif (currentHeight%2 == 0):
+            startOffset = 2
 
+
+
+            index += 1 #?
+        index += 3
+
+#        mapData[0] = index 0
 
     if (mapData[i] < 50):
         pass
