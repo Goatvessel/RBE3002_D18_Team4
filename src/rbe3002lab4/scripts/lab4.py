@@ -31,32 +31,80 @@ def getResizedNodes(mapData):
     global resolution
     global offsetX
     global offsetY
+    global primes
 
-    index = 0
-    listOfGroups = []
-    listOfNodes = []
-    indicesToCheck = []
-    while (index < width*height):
+    verticalBreaks = getListOfFactors(width)
+    horizontalBreaks = getListOfFactors(height)
 
 
-    if (mapData[i] < 50):
-        pass
+    # List of indices size 1x1
+    # List of indices size 2x2
+    # List of indices size 3x3
+    # List of indices size 4x4
+    # List of indices size 5x5
+    # List of indices size 6x6
+    # generateGridCells(listOfIndices, layer, width, height)
+
+    # updatePrimes(number)
+
+    # index = 0
+    # i = 0
+    # listOfGroups = []
+    # listOfNodes = []
+    # indicesToCheck = []
+    # minWidth = 0
+    # maxWidth = minWidth+width
+    # minHeight = 0
+    # maxHeight = minHeight +height
+    # boxWidth = width
+    # boxHeight = height
+    # currentHeight = 0
+    # currentWidth = 0
+    # while (index < width*height):
+    #     if (currentHeight%2 != 0):
+    #         pass
+    #     elif (currentHeight%4 == 0):
+    #         start = 0
+    #     elif (currentHeight%2 == 0):
+    #         startOffset = 2
+    #         index += 1 #?
+    #     index += 3
 
 
-    pass
-# def publishCells(grid):
-#     global wallIndices
-#
-#     # Initialize variables
-#     cells = GridCells()
-#     cells.header.frame_id = 'map'
-#     cells.cell_width = resolution
-#     cells.cell_height = resolution
-#     k = 0
-#
-#     for i in range(0,height):
-#         for j in range(0,width):
-#                 if (grid[k] > 50):
+
+
+
+def primesLessThan(number):
+    primes = []
+    if number <= 3:
+        return primes
+    else:
+        primes = [2]
+        i = 3
+    while i < number:
+        primality = True
+        for val in primes:
+            if val > math.sqrt(i):
+                break
+            if i%val == 0:
+                primality = False
+                break
+        if primality == True:
+            primes.append(i)
+        i += 2
+    return primes
+
+def getListOfFactors(number):
+    factors = []
+    cur = number
+    checkVals = primesLessThan(number)
+    for val in checkVals:
+        if cur == 1:
+            break
+        while( cur%val == 0 ):
+            cur = cur/val
+            factors.append(val)
+    return factors
 
 
 # ------------------------------ Map Functions ------------------------------ #
@@ -309,6 +357,21 @@ def convertPose(myPose):
     (roll, pitch, yaw) = euler_from_quaternion(q)
 
     return [xPos, yPos, yaw]
+
+# Function: Given two indices, locate the center between them
+# Input: Index A, Index B
+# Output: (X,Y) position
+def getCenter(indexCornerA, indexCornerB):
+    (aX, aY) = getXY(indexCornerA)
+    (bX, bY) = getXY(indexCornerB)
+    (midX, midY) = (.5*(aX + bX), .5*(aY + bY))
+    return (midX, midY)
+
+# Function: Generate GridCells Message from a list of (x,y) points
+# Input: List of (x,y) points, (optional) layer, (optional) height, (optional) width
+# Output: Gridcells
+def generateGridCellsByPoints(pointList, layer=0, width=1,height=1):
+    pass
 
 # Function: Generate GridCells Message from a list of indices
 # Input: List of Map Indices, (Optional) height
