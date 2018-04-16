@@ -229,6 +229,35 @@ def getGridUpdate(grid):
     mapPub.publish(cells)
 
 
+# Function:
+# Input: grid and cell distance
+# Output: 
+def filterIndeces(grid, mode=4): # mode determines how many empty cells between checks
+    global width
+    global height
+    global something
+    i = 0
+    while (i < width*height):
+        i = i + mode
+        if ()
+            i = i + width
+
+
+    for i in range(0,height):
+        for j in range(0,width):
+                if (grid[k] > 50):
+                    indexChecklist = getNearbyIndices(k)
+                    for index in indexChecklist:
+                        if index not in wallIndices:
+                            wallIndices.append(index)
+                if (j%4 == 0):
+                    k = k + mode
+                else
+                    k = 1
+
+        i = i + 2
+
+
 
 # ----------------------------- Helper Functions ---------------------------- #
 
