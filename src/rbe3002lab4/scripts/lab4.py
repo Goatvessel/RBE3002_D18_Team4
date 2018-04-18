@@ -23,88 +23,88 @@ from Queue import PriorityQueue
 #           build a visualization of the environment
 # Input: gridData
 # Output: List of Nodes
-def getResizedNodes(mapData):
-# Return large gridcell data to approximate the environment with
-# Use this to pathfind between Nodes through their centers and their edges
-    global width
-    global height
-    global resolution
-    global offsetX
-    global offsetY
-    global primes
-
-    verticalBreaks = getListOfFactors(width)
-    horizontalBreaks = getListOfFactors(height)
-
-
-    # List of indices size 1x1
-    # List of indices size 2x2
-    # List of indices size 3x3
-    # List of indices size 4x4
-    # List of indices size 5x5
-    # List of indices size 6x6
-    # generateGridCells(listOfIndices, layer, width, height)
-
-    # updatePrimes(number)
-
-    # index = 0
-    # i = 0
-    # listOfGroups = []
-    # listOfNodes = []
-    # indicesToCheck = []
-    # minWidth = 0
-    # maxWidth = minWidth+width
-    # minHeight = 0
-    # maxHeight = minHeight +height
-    # boxWidth = width
-    # boxHeight = height
-    # currentHeight = 0
-    # currentWidth = 0
-    # while (index < width*height):
-    #     if (currentHeight%2 != 0):
-    #         pass
-    #     elif (currentHeight%4 == 0):
-    #         start = 0
-    #     elif (currentHeight%2 == 0):
-    #         startOffset = 2
-    #         index += 1 #?
-    #     index += 3
-
-
+# def getResizedNodes(mapData):
+# # Return large gridcell data to approximate the environment with
+# # Use this to pathfind between Nodes through their centers and their edges
+#     global width
+#     global height
+#     global resolution
+#     global offsetX
+#     global offsetY
+#     global primes
+#
+#     verticalBreaks = getListOfFactors(width)
+#     horizontalBreaks = getListOfFactors(height)
+#
+#
+#     # List of indices size 1x1
+#     # List of indices size 2x2
+#     # List of indices size 3x3
+#     # List of indices size 4x4
+#     # List of indices size 5x5
+#     # List of indices size 6x6
+#     # generateGridCells(listOfIndices, layer, width, height)
+#
+#     # updatePrimes(number)
+#
+#     # index = 0
+#     # i = 0
+#     # listOfGroups = []
+#     # listOfNodes = []
+#     # indicesToCheck = []
+#     # minWidth = 0
+#     # maxWidth = minWidth+width
+#     # minHeight = 0
+#     # maxHeight = minHeight +height
+#     # boxWidth = width
+#     # boxHeight = height
+#     # currentHeight = 0
+#     # currentWidth = 0
+#     # while (index < width*height):
+#     #     if (currentHeight%2 != 0):
+#     #         pass
+#     #     elif (currentHeight%4 == 0):
+#     #         start = 0
+#     #     elif (currentHeight%2 == 0):
+#     #         startOffset = 2
+#     #         index += 1 #?
+#     #     index += 3
 
 
 
-def primesLessThan(number):
-    primes = []
-    if number <= 3:
-        return primes
-    else:
-        primes = [2]
-        i = 3
-    while i < number:
-        primality = True
-        for val in primes:
-            if val > math.sqrt(i):
-                break
-            if i%val == 0:
-                primality = False
-                break
-        if primality == True:
-            primes.append(i)
-        i += 2
-    return primes
 
-def getListOfFactors(number):
-    factors = []
-    cur = number
-    checkVals = primesLessThan(number)
-    for val in checkVals:
-        if cur == 1:
-            break
-        while( cur%val == 0 ):
-            cur = cur/val
-            factors.append(val)
-    return factors
+#
+# def primesLessThan(number):
+#     primes = []
+#     if number <= 3:
+#         return primes
+#     else:
+#         primes = [2]
+#         i = 3
+#     while i < number:
+#         primality = True
+#         for val in primes:
+#             if val > math.sqrt(i):
+#                 break
+#             if i%val == 0:
+#                 primality = False
+#                 break
+#         if primality == True:
+#             primes.append(i)
+#         i += 2
+#     return primes
+#
+# def getListOfFactors(number):
+#     factors = []
+#     cur = number
+#     checkVals = primesLessThan(number)
+#     for val in checkVals:
+#         if cur == 1:
+#             break
+#         while( cur%val == 0 ):
+#             cur = cur/val
+#             factors.append(val)
+#     return factors
 
 
 # ------------------------------ Map Functions ------------------------------ #
@@ -123,13 +123,15 @@ def mapCallBack(data):
     mapgrid = data
     resolution = data.info.resolution
     mapData = data.data
+    #print("mapdata : ", mapData)
     width = data.info.width
     height = data.info.height
     offsetX = data.info.origin.position.x
     offsetY = data.info.origin.position.y
-    resizeCells(data)
+    #resizeCells(mapData)
+
     print("Map Loaded")
-    getResizedNodes(mapData)
+    #getResizedNodes(mapData)
     #getGridUpdate(mapData)
     #print data.info
 
@@ -241,8 +243,39 @@ def publishCells01(grid):
     # Display walls in rviz
     mapPub.publish(cells)
 
-def resizeCells(rfactor):
-    pass
+#Groups cells together to "optimize" the Astar algorithm
+# def resizeCells(rfactor = 0):
+#     #global newIndexList[]
+#
+#     global mapData
+#     global width
+#     global height
+#     global mapgrid
+#     global resolution
+#     global offsetX
+#     global offsetY
+#     mapgrid = data
+#     resolution = data.info.resolution
+#     mapData = data.data
+#     width = data.info.width
+#     height = data.info.height
+#     offsetX = data.info.origin.position.x
+#     offsetY = data.info.origin.position.y
+#
+#     newRes = resolution/rfactor
+#
+#
+#     for i in mapData:
+#
+#         for j in mapdata:
+#             j = j + rfactor
+#
+#         i = i+rfactor
+#
+#     return newRes
+
+
+
 
 
 def getGridUpdate(grid):
@@ -279,31 +312,33 @@ def getGridUpdate(grid):
 
 # Function:
 # Input: grid and cell distance
-# Output: 
-def filterIndeces(grid, mode=4): # mode determines how many empty cells between checks
-    global width
-    global height
-    global something
-    i = 0
-    while (i < width*height):
-        i = i + mode
-        if ()
-            i = i + width
-
-
-    for i in range(0,height):
-        for j in range(0,width):
-                if (grid[k] > 50):
-                    indexChecklist = getNearbyIndices(k)
-                    for index in indexChecklist:
-                        if index not in wallIndices:
-                            wallIndices.append(index)
-                if (j%4 == 0):
-                    k = k + mode
-                else
-                    k = 1
-
-        i = i + 2
+# Output:
+#
+# def filterIndeces(grid, mode=4): # mode determines how many empty cells between checks
+#         global width
+#         global height
+#         global something
+#
+#         i = 0
+#         while (i < width*height):
+#             i = i + mode
+#         #    if ()
+#                 i = i + width
+#
+#
+#     for i in range(0,height):
+#         for j in range(0,width):
+#                 if (grid[k] > 50):
+#                     indexChecklist = getNearbyIndices(k)
+#                     for index in indexChecklist:
+#                         if index not in wallIndices:
+#                             wallIndices.append(index)
+#                 if (j%4 == 0):
+#                     k = k + mode
+#                 else
+#                     k = 1
+#
+#         i = i + 2
 
 
 
@@ -581,6 +616,7 @@ def waypoints(indexList):
         angleBetweenStartNext = math.atan2(nextY-startY,nextX-startX)
         if (abs(angleBetweenLastStart - angleBetweenStartNext) > .2):
             waypointList.append(pathList[i])
+            aStar(pathList[i], goalCell)
 
         # #print("Current X: ", getXY(node)," WP X: ",getXY(waypointList[-1])[0])
         #     #print("Current Y: ", getXY(node)," WP Y: ",getXY(waypointList[-1])[1])
@@ -641,7 +677,8 @@ def wayposes(waypointList):
 
         # Add new PoseStamped Message to list of waypoint Poses
         wayPoses.append(lastPose)
-
+        # if (waypoint+1 < range(1,len(waypointList))):
+        #     turtle.navToPose(waypointList[waypoint],waypointList[waypoint+1])
     print(" Path: Generated List of Poses")
     # Generate Path Message from PoseStamped Messages
     wayPath = Path()
@@ -666,8 +703,7 @@ class Robot:
         rospy.Timer(rospy.Duration(.1), self.timerCallback) # Setup callback - not hard real-time
         self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
-
-
+        #rospy.Subscriber('goto', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
 
     # Function:
     # Input:
@@ -690,7 +726,7 @@ class Robot:
         initialPose = convertPose(origin)
         xInitial = initialPose[0] # Current X
         yInitial = initialPose[1] # CUrrent Y
-        yawInitial = initialPose[2] # Current Yaw
+        yawInitial = initialPose[2] # Current Yaw.
 
         # Distance to the Goal from the Start
         straightline = math.sqrt(math.pow(xGoal,2) + math.pow(yGoal,2))
@@ -924,6 +960,8 @@ def run():
     global gridPathPub
     global wayGridPub
     global wayPathPub
+    global turtle
+
 
     # Set Important Indices as Global Variables
     global startCell
@@ -932,6 +970,7 @@ def run():
     global radius
 
     # Initialize Variables
+
     wallIndices = []
     startCell = None
     goalCell = None
@@ -954,6 +993,7 @@ def run():
     wayPathPub = rospy.Publisher("/wayPath", Path, queue_size=1) # Path path of waypoints from start to end
     wayGridPub = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
+    #goal_sub = rospy.Subscriber('goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
 
     # Wait a second for publisher, subscribers, and TF
@@ -963,7 +1003,7 @@ def run():
 
     while (not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
-        rospy.sleep(2)
+        rospy.sleep(.5)
     print("")
     print("- - End Operation - -")
 
@@ -971,5 +1011,6 @@ def run():
 if __name__ == '__main__':
     try:
         run()
+        turtle = Robot()
     except rospy.ROSInterruptException:
         pass
