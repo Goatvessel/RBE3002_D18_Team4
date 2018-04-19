@@ -616,7 +616,7 @@ def waypoints(indexList):
         angleBetweenStartNext = math.atan2(nextY-startY,nextX-startX)
         if (abs(angleBetweenLastStart - angleBetweenStartNext) > .2):
             waypointList.append(pathList[i])
-            aStar(pathList[i], goalCell)
+
 
         # #print("Current X: ", getXY(node)," WP X: ",getXY(waypointList[-1])[0])
         #     #print("Current Y: ", getXY(node)," WP Y: ",getXY(waypointList[-1])[1])
@@ -677,8 +677,10 @@ def wayposes(waypointList):
 
         # Add new PoseStamped Message to list of waypoint Poses
         wayPoses.append(lastPose)
-        # if (waypoint+1 < range(1,len(waypointList))):
-        #     turtle.navToPose(waypointList[waypoint],waypointList[waypoint+1])
+        if (waypoint+1 < range(1,len(waypointList))):
+            turtle.navToPose(waypointList[waypoint+1])
+            aStar(waypointList[waypoint], waypointList[-1])
+
     print(" Path: Generated List of Poses")
     # Generate Path Message from PoseStamped Messages
     wayPath = Path()
@@ -700,7 +702,7 @@ class Robot:
     def __init__(self):
         self._current = Pose() # Position and orientation of the robot
         self._odom_list = tf.TransformListener() # Subscribe to transform messages
-        rospy.Timer(rospy.Duration(.1), self.timerCallback) # Setup callback - not hard real-time
+        rospy.Timer(rospy.Duration(.1), timerCallback) # Setup callback - not hard real-time
         self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
         #rospy.Subscriber('goto', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
@@ -734,11 +736,11 @@ class Robot:
         initialYaw = math.atan2(yGoal,xGoal)
 
         # Rotate to face the Goal position
-        self.rotate(initialYaw)
+        rotate(initialYaw)
         # Drive straight to the Goal position
-        self.driveStraight(.2,straightline)
+        driveStraight(.2,straightline)
         # Rotate to face the Goal orientation
-        self.rotate(yawGoal - initialYaw)
+        rotate(yawGoal - initialYaw)
 
     # Function:
     # Input:
@@ -747,10 +749,10 @@ class Robot:
 		# A set trajectory to follow
 		# Drive 0.6 meters, Rotate 90 degrees right, drive 0.45 meters, rotate 135 degrees left
 
-        self.driveStraight(.05,.6,_DEBUG_)
-        self.rotate(-90,True,_DEBUG_)
-        self.driveStraight(.1,.45,_DEBUG_)
-        self.rotate(135,True,_DEBUG_)
+        driveStraight(.05,.6,_DEBUG_)
+        rotate(-90,True,_DEBUG_)
+        driveStraight(.1,.45,_DEBUG_)
+        rotate(135,True,_DEBUG_)
 
 # ---------------------------- Robot Movement Functions ------------------------ #
 
@@ -972,6 +974,7 @@ def run():
     # Initialize Variables
 
     wallIndices = []
+    turtle = Robot()
     startCell = None
     goalCell = None
     radius = 2
@@ -1011,6 +1014,6 @@ def run():
 if __name__ == '__main__':
     try:
         run()
-        turtle = Robot()
+
     except rospy.ROSInterruptException:
         pass
