@@ -149,12 +149,12 @@ def publishCells(grid):
     for i in range(0,height):
         for j in range(0,width):
                 if (grid[k] > 50):
-                    indexChecklist = getNearbyIndices(k)
+                    indexChecklist = getNearbyIndices(k) # Expansion
                     for index in indexChecklist:
                         if index not in wallIndices:
                             wallIndices.append(index)
                 k = k + 1
-    wallPoints = getPointsFromIndicies(wallIndices)
+    wallPoints = getPointsFromIndices(wallIndices)
     #print("Length of wallPoints: ",len(wallIndices))
     for point in wallPoints:
         outPoint = Point()
@@ -166,24 +166,28 @@ def publishCells(grid):
         #print(point)
     mapPub.publish(cells)
 
-def getPointsFromIndicies(wallIndices):
+# Function: Gets the X and Y coordinates for all of the desired indices
+# Input: List of Indices
+# Output: List of tuples (X,Y)
+def getPointsFromIndices(wallIndices):
     listOfPoints = []
     for index in wallIndices:
         listOfPoints.append(getXY(index))
     return listOfPoints
 
-def getNearbyPoints(point):
-    pX = point.x
-    pY = point.y
-    listOfPoints = []
-    for i in range(-3,4):
-        for j in range(-3,4):
-            newPointX = pX + i*resolution
-            newPointY = pY + j*resolution
-            point.x = newPointX
-            point.y = newPointY
-            listOfPoints.append(point)
-    return listOfPoints
+# Deprecated
+# def getNearbyPoints(point):
+#     pX = point.x
+#     pY = point.y
+#     listOfPoints = []
+#     for i in range(-3,4):
+#         for j in range(-3,4):
+#             newPointX = pX + i*resolution
+#             newPointY = pY + j*resolution
+#             point.x = newPointX
+#             point.y = newPointY
+#             listOfPoints.append(point)
+#     return listOfPoints
 
 def getNearbyIndices(index):
     global radius
@@ -196,47 +200,49 @@ def getNearbyIndices(index):
                 #print(len(indexChecklist))
     return indexChecklist
 
-def getSquare(index):
-    pass
-# First pass: width / 3
+# Deprecated
+# def getSquare(index):
+#     pass
+# # First pass: width / 3
 
-# Function: Publish Map to rviz using GridCells type
-# Input: OccupancyGrid.data
-def publishCells01(grid):
-    global wallIndices
-    global thicc
-
-    # Initialize variables
-    k=0
-    cells = GridCells()
-    cells.header.frame_id = 'map'
-    cells.cell_width = resolution
-    cells.cell_height = resolution
-
-    for i in range(0,height): #height should be set to hieght of grid
-        for j in range(0,width): #width should be set to width of grid
-
-            # grid values are probability percentages of occupancy. The following condition gives all the cells where
-            # occupancy probability is more than 50%
-            if (grid[k] > 50):
-                index = i*width+j
-                point=Point()
-                point.z=0
-                # 0.5*resolution moves the point to the center of the grid cell
-                wallX = (j*resolution)+offsetX + (0.5 * resolution)
-                wallY = (i*resolution)+offsetY + (0.5 * resolution)
-                for k in range(0,6):
-                    for m in range(0,6):
-                        point.x = wallX + (k-3)*resolution
-                        point.y= wallY + (m-3)*resolution
-                        cells.cells.append(point)
-                        indexCheck = index + width*m + k
-                        # Store a list of Wall Indices - for checking neighbors
-                        if indexCheck not in wallIndices:
-                            wallIndices.append(indexCheck)
-            k = k + 1
-    # Display walls in rviz
-    mapPub.publish(cells)
+# Deprecated
+# # Function: Publish Map to rviz using GridCells type
+# # Input: OccupancyGrid.data
+# def publishCells01(grid):
+#     global wallIndices
+#     global thicc
+#
+#     # Initialize variables
+#     k=0
+#     cells = GridCells()
+#     cells.header.frame_id = 'map'
+#     cells.cell_width = resolution
+#     cells.cell_height = resolution
+#
+#     for i in range(0,height): #height should be set to hieght of grid
+#         for j in range(0,width): #width should be set to width of grid
+#
+#             # grid values are probability percentages of occupancy. The following condition gives all the cells where
+#             # occupancy probability is more than 50%
+#             if (grid[k] > 50):
+#                 index = i*width+j
+#                 point=Point()
+#                 point.z=0
+#                 # 0.5*resolution moves the point to the center of the grid cell
+#                 wallX = (j*resolution)+offsetX + (0.5 * resolution)
+#                 wallY = (i*resolution)+offsetY + (0.5 * resolution)
+#                 for k in range(0,6):
+#                     for m in range(0,6):
+#                         point.x = wallX + (k-3)*resolution
+#                         point.y= wallY + (m-3)*resolution
+#                         cells.cells.append(point)
+#                         indexCheck = index + width*m + k
+#                         # Store a list of Wall Indices - for checking neighbors
+#                         if indexCheck not in wallIndices:
+#                             wallIndices.append(indexCheck)
+#             k = k + 1
+#     # Display walls in rviz
+#     mapPub.publish(cells)
 
 #Groups cells together to "optimize" the Astar algorithm
 # def resizeCells(rfactor = 0):
@@ -272,37 +278,37 @@ def publishCells01(grid):
 
 
 
-
-def getGridUpdate(grid):
-    global gridIndices
-
-    # Initialize variables
-    cells = GridCells()
-    cells.header.frame_id = 'map'
-    cells.cell_width = resolution
-    cells.cell_height = resolution
-    k = 0
-
-    for i in range(0,height):
-        for j in range(0,width):
-            if (grid[k] < 50):
-                indexChecklist = getNearbyIndices(k)
-                for index in indexChecklist:
-                    if index not in wallIndices:
-                        wallIndices.append(index)
-                k = k + 1
-    gridIndices = 1
-    wallPoints = getPointsFromIndicies(wallIndices)
-    #print("Length of wallPoints: ",len(wallIndices))
-    for point in wallPoints:
-        outPoint = Point()
-        outPoint.x = point[0]
-        outPoint.y = point[1]
-        outPoint.z = 0
-
-        cells.cells.append(outPoint)
-        #print(point)
-    mapPub.publish(cells)
+# Deprecated
+# def getGridUpdate(grid):
+#     global gridIndices
+#
+#     # Initialize variables
+#     cells = GridCells()
+#     cells.header.frame_id = 'map'
+#     cells.cell_width = resolution
+#     cells.cell_height = resolution
+#     k = 0
+#
+#     for i in range(0,height):
+#         for j in range(0,width):
+#             if (grid[k] < 50):
+#                 indexChecklist = getNearbyIndices(k)
+#                 for index in indexChecklist:
+#                     if index not in wallIndices:
+#                         wallIndices.append(index)
+#                 k = k + 1
+#     gridIndices = 1
+#     wallPoints = getPointsFromIndices(wallIndices)
+#     #print("Length of wallPoints: ",len(wallIndices))
+#     for point in wallPoints:
+#         outPoint = Point()
+#         outPoint.x = point[0]
+#         outPoint.y = point[1]
+#         outPoint.z = 0
+#
+#         cells.cells.append(outPoint)
+#         #print(point)
+#     mapPub.publish(cells)
 
 
 # Function:
@@ -356,8 +362,9 @@ def getXY(index):
     x = (index%width)*resolution+offsetX + (0.5 * resolution)
     return x, y
 
-def getAngleBetweenIndices(startIndex,goalIndex):
-    pass
+# Deprecated
+# def getAngleBetweenIndices(startIndex,goalIndex):
+#     pass
 
 # Function: Converts a Pose message into a list of
 # Input: Pose() Message
@@ -392,8 +399,9 @@ def convertPose(myPose):
         xPos = myPose.position.x
         yPos = myPose.position.y
 
-    (roll, pitch, yaw) = euler_from_quaternion(q)
 
+    (roll, pitch, yaw) = euler_from_quaternion(q)
+    #print(roll," ",pitch,"",yaw)
     return [xPos, yPos, yaw]
 
 # Function: Given two indices, locate the center between them
@@ -703,9 +711,10 @@ class Robot:
     # Input:
     # Output:
     def __init__(self):
+        global _current
         self._current = Pose() # Position and orientation of the robot
         self._odom_list = tf.TransformListener() # Subscribe to transform messages
-        rospy.Timer(rospy.Duration(.1), timerCallback) # Setup callback - not hard real-time
+        rospy.Timer(rospy.Duration(.1), self.timerCallback) # Setup callback - not hard real-time
 #        self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
         #rospy.Subscriber('goto', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
@@ -721,7 +730,7 @@ class Robot:
         self._odom_list.waitForTransform('odom', 'base_link', rospy.Time.now(), rospy.Duration(1.0))
         # transform the nav goal from the global coordinate system to the robot's coordinate system
         GoalPoseStamped = self._odom_list.transformPose('base_link', goal)
-        GoalPose = convertPose(GoalPoseStamped.pose)
+        GoalPose = convertPose(GoalPoseStamped)
         xGoal = GoalPose[0] # Desired X
         yGoal = GoalPose[1] # Desired Y
         yawGoal = GoalPose[2] # Desired yaw - angle about z axis
@@ -756,6 +765,30 @@ class Robot:
         rotate(-90,True,_DEBUG_)
         driveStraight(.1,.45,_DEBUG_)
         rotate(135,True,_DEBUG_)
+
+    # Function:
+    # Input:
+    # Output:
+    def timerCallback(self,evprent):
+        global _current
+    	# Wait for and get the transform between two frames
+    	self._odom_list.waitForTransform('/odom', '/base_footprint', rospy.Time(0), rospy.Duration(1.0))
+    	(position, orientation) = self._odom_list.lookupTransform('/odom', '/base_footprint', rospy.Time(0))
+       	# Save the current position and orientation
+    	self._current.position.x = position[0]
+    	self._current.position.y = position[1]
+    	self._current.orientation.x = orientation[0]
+    	self._current.orientation.y = orientation[1]
+    	self._current.orientation.z = orientation[2]
+    	self._current.orientation.w = orientation[3]
+    	# Create a quaternion
+       	q = [self._current.orientation.x,
+    		self._current.orientation.y,
+    		self._current.orientation.z,
+    		self._current.orientation.w]
+    	# convert the quaternion to roll pitch yaw
+    	(roll, pitch, yaw) = euler_from_quaternion(q)
+        print(yaw)
 
 # ---------------------------- Robot Movement Functions ------------------------ #
 
@@ -878,27 +911,7 @@ def _get_twist(linear, angular):
 	twist.angular.z = angular
 	return twist
 
-# Function:
-# Input:
-# Output:
-def timerCallback(self,evprent):
-	# Wait for and get the transform between two frames
-	self._odom_list.waitForTransform('/odom', '/base_footprint', rospy.Time(0), rospy.Duration(1.0))
-	(position, orientation) = self._odom_list.lookupTransform('/odom', '/base_footprint', rospy.Time(0))
-   	# Save the current position and orientation
-	self._current.position.x = position[0]
-	self._current.position.y = position[1]
-	self._current.orientation.x = orientation[0]
-	self._current.orientation.y = orientation[1]
-	self._current.orientation.z = orientation[2]
-	self._current.orientation.w = orientation[3]
-	# Create a quaternion
-   	q = [self._current.orientation.x,
-		self._current.orientation.y,
-		self._current.orientation.z,
-		self._current.orientation.w]
-	# convert the quaternion to roll pitch yaw
-	(roll, pitch, yaw) = euler_from_quaternion(q)
+
 
 # Function:
 # Input:
@@ -967,6 +980,7 @@ def run():
     global wayGridPub
     global wayPathPub
     global turtle
+    global _current
 
     global _vel_pub
 
@@ -990,7 +1004,8 @@ def run():
     print("Initializing Pubs and Subs")
 
     # Set Pubs and Subs
-    rospy.init_node('lab3')
+    #rospy.init_node('lab3')
+    rospy.init_node('drive_base')
     mapSub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     mapPub = rospy.Publisher("/map_check", GridCells, queue_size=1)
     startPub = rospy.Publisher("/start_cell", GridCells, queue_size=1)
@@ -1009,6 +1024,7 @@ def run():
 
     # Wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
+
     print("Pubs and Subs Initialized")
     print("- - Begin Operation - -")
 
