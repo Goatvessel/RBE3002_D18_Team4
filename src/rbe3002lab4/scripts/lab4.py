@@ -2,19 +2,14 @@
 
 # ---------------------------------- Imports -------------------------------- #
 
-import rospy
-from nav_msgs.msg import GridCells
+import rospy, tf, copy, math, time
+import numpy as np
+from nav_msgs.msg import GridCells, Path, Odometry, OccupancyGrid
 from std_msgs.msg import String
-from nav_msgs.msg import Path
 from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianceStamped
-from nav_msgs.msg import Odometry, OccupancyGrid
 from kobuki_msgs.msg import BumperEvent
 from tf.transformations import euler_from_quaternion
 from tf.transformations import quaternion_from_euler
-import tf
-import numpy
-import math
-import rospy, tf, numpy, math
 from Queue import PriorityQueue
 
 # ------------------------------ WIP Functions ------------------------------ #
@@ -711,7 +706,7 @@ class Robot:
         self._current = Pose() # Position and orientation of the robot
         self._odom_list = tf.TransformListener() # Subscribe to transform messages
         rospy.Timer(rospy.Duration(.1), timerCallback) # Setup callback - not hard real-time
-        self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
+#        self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
         #rospy.Subscriber('goto', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
 
@@ -767,9 +762,9 @@ class Robot:
 # Function:
 # Input:
 # Output:
-def driveStraight(self, speed, distance, _DEBUG_=False):
+def driveStraight(speed, distance, _DEBUG_=False):
 	# Drive both wheels at the same speed for a set distance
-    self.spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
+    spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
     #_DEBUG_ = True
 
     interval = .01 # [seconds] Check current position against goal position after this time interval
@@ -777,7 +772,7 @@ def driveStraight(self, speed, distance, _DEBUG_=False):
     v_right = speed # [m/s]
     distance = distance # [m]
 
-    origin = copy.deepcopy(self._current)
+    origin = copy.deepcopy(turtle._current)
     currentPose = convertPose(origin)
     initial_x = current_x = currentPose[0]
     initial_y = current_y = currentPose[1]
@@ -790,8 +785,8 @@ def driveStraight(self, speed, distance, _DEBUG_=False):
     distanceToGo = distance - distanceTraveled
 
     while distanceToGo > 0:
-        self.spinWheels(v_left, v_right, interval)
-        currentPose = convertPose(copy.deepcopy(self._current))
+        spinWheels(v_left, v_right, interval)
+        currentPose = convertPose(copy.deepcopy(turtle._current))
         current_x = currentPose[0]
         current_y = currentPose[1]
 
@@ -808,7 +803,7 @@ def driveStraight(self, speed, distance, _DEBUG_=False):
 # Function:
 # Input:
 # Output:
-def spinWheels(self, v_left, v_right, forTime):
+def spinWheels(v_left, v_right, forTime):
 	# Spin the left and right wheels at set velocities for a length of time
 
     wheelbase = 0.16 # [meters] based on wheelbase http://www.robotis.us/turtlebot-3-burger-us/
@@ -817,21 +812,22 @@ def spinWheels(self, v_left, v_right, forTime):
     linearVel = (v_right+v_left)/2
     angularVel = (v_right-v_left)/wheelbase
     timeDrive = time.time() + forTime
-    Twist = self._get_twist(linearVel,angularVel)
+    Twist = _get_twist(linearVel,angularVel)
 
     # Drive wheels for set amount of time
     while (time.time() < timeDrive):
-        self._vel_pub.publish(Twist)
-
+        #turtle._vel_pub.publish(Twist)
+        _vel_pub.publish(Twist)
     # Stop the robot - to be safe
-    StopTwist = self._get_twist(0,0)
-    self._vel_pub.publish(StopTwist)
+    StopTwist = _get_twist(0,0)
+    #turtle._vel_pub.publish(StopTwist)
+    _vel_pub.publish(Twist)
 
 
 # Function:
 # Input:
 # Output:
-def rotate(self,angle, deg=False, _DEBUG_=False):
+def rotate(angle, deg=False, _DEBUG_=False):
 	# Rotate by an angle [radians]
 	# self.rotate(angle,True) to use degrees instead of radians
 
@@ -844,14 +840,14 @@ def rotate(self,angle, deg=False, _DEBUG_=False):
     if deg == True: # Convert degrees to radians
         angle = math.radians(angle)
 
-    self.spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
-    origin = copy.deepcopy(self._current) # Current orientation
+    spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
+    origin = copy.deepcopy(turtle._current) # Current orientation
     q = [origin.orientation.x,
 		origin.orientation.y,
 		origin.orientation.z,
 		origin.orientation.w] # quaternion nonsense
     (roll, pitch, yaw) = euler_from_quaternion(q)
-    initialPose = convertPose(copy.deepcopy(self._current))
+    initialPose = convertPose(copy.deepcopy(turtle._current))
     currentYaw = initialPose[2]
     goalYaw = angle + currentYaw # Goal angle
 
@@ -863,10 +859,10 @@ def rotate(self,angle, deg=False, _DEBUG_=False):
 
     while abs(goalYaw - currentYaw) > tolerance:
         if (angle < 0): # Clockwise
-            self.spinWheels(speed,-speed,interval)
+            spinWheels(speed,-speed,interval)
         else: # Withershins
-            self.spinWheels(-speed,speed,interval)
-        currentYaw = convertPose(copy.deepcopy(self._current))[2]
+            spinWheels(-speed,speed,interval)
+        currentYaw = convertPose(copy.deepcopy(turtle._current))[2]
         if _DEBUG_:
             print ("Current Angle: ",currentYaw," Distance To Go: ",abs(goalYaw-currentYaw))
 
@@ -875,7 +871,7 @@ def rotate(self,angle, deg=False, _DEBUG_=False):
 # Function:
 # Input:
 # Output:
-def _get_twist(self, linear, angular):
+def _get_twist(linear, angular):
 	# Construct Twist message for differential drive robot based on linear and angular velocity
 	twist = Twist()
 	twist.linear.x = linear
@@ -972,6 +968,8 @@ def run():
     global wayPathPub
     global turtle
 
+    global _vel_pub
+
 
     # Set Important Indices as Global Variables
     global startCell
@@ -1006,6 +1004,8 @@ def run():
     goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
     #goal_sub = rospy.Subscriber('goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
+
+    _vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
 
     # Wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
