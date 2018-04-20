@@ -371,8 +371,9 @@ def convertPose(myPose):
     print(type(myPose))
     typePoseCove = type(PoseWithCovarianceStamped())
     typePoseStamp = type(PoseStamped())
-    typePose = type(myPose)
-    if typePose == typePoseCove:
+    typePose = type(Pose())
+    myType = type(myPose)
+    if myType == typePoseCove:
         #
         # Where Yaw is the rotation about the Z-Axis
         q = [myPose.pose.pose.orientation.x,
@@ -381,13 +382,20 @@ def convertPose(myPose):
     		myPose.pose.pose.orientation.w]
         xPos = myPose.pose.pose.position.x
         yPos = myPose.pose.pose.position.y
-    elif typePose == typePoseStamp:
+    elif myType == typePoseStamp:
         q = [myPose.pose.orientation.x,
     		myPose.pose.orientation.y,
     		myPose.pose.orientation.z,
     		myPose.pose.orientation.w]
         xPos = myPose.pose.position.x
         yPos = myPose.pose.position.y
+    elif myType == typePose:
+        q = [myPose.orientation.x,
+    		myPose.orientation.y,
+    		myPose.orientation.z,
+    		myPose.orientation.w]
+        xPos = myPose.position.x
+        yPos = myPose.position.y
 
     (roll, pitch, yaw) = euler_from_quaternion(q)
 
@@ -678,7 +686,7 @@ def wayposes(waypointList):
         # Add new PoseStamped Message to list of waypoint Poses
         wayPoses.append(lastPose)
         if (waypoint+1 < range(1,len(waypointList))):
-            turtle.navToPose(waypointList[waypoint+1])
+            turtle.navToPose(lastPose)
             aStar(waypointList[waypoint], waypointList[-1])
 
     print(" Path: Generated List of Poses")

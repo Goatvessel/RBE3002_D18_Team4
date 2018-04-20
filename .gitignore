@@ -19,4 +19,6 @@
 src/*
 !src/rbe3002Lab3/
 !src/rbe3002lab4/
+!src/rbe3002lab5/
+!src/rbe3002_d2018_final_gazebo/
 !src/CMakeLists.txt
