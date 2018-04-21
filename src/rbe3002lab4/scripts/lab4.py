@@ -2,14 +2,19 @@
 
 # ---------------------------------- Imports -------------------------------- #
 
-import rospy, tf, copy, math, time
-import numpy as np
-from nav_msgs.msg import GridCells, Path, Odometry, OccupancyGrid
+import rospy
+from nav_msgs.msg import GridCells
 from std_msgs.msg import String
+from nav_msgs.msg import Path
 from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianceStamped
+from nav_msgs.msg import Odometry, OccupancyGrid
 from kobuki_msgs.msg import BumperEvent
 from tf.transformations import euler_from_quaternion
 from tf.transformations import quaternion_from_euler
+import tf
+import numpy
+import math
+import rospy, tf, numpy, math
 from Queue import PriorityQueue
 
 # ------------------------------ WIP Functions ------------------------------ #
@@ -149,12 +154,12 @@ def publishCells(grid):
     for i in range(0,height):
         for j in range(0,width):
                 if (grid[k] > 50):
-                    indexChecklist = getNearbyIndices(k) # Expansion
+                    indexChecklist = getNearbyIndices(k)
                     for index in indexChecklist:
                         if index not in wallIndices:
                             wallIndices.append(index)
                 k = k + 1
-    wallPoints = getPointsFromIndices(wallIndices)
+    wallPoints = getPointsFromIndicies(wallIndices)
     #print("Length of wallPoints: ",len(wallIndices))
     for point in wallPoints:
         outPoint = Point()
@@ -166,28 +171,24 @@ def publishCells(grid):
         #print(point)
     mapPub.publish(cells)
 
-# Function: Gets the X and Y coordinates for all of the desired indices
-# Input: List of Indices
-# Output: List of tuples (X,Y)
-def getPointsFromIndices(wallIndices):
+def getPointsFromIndicies(wallIndices):
     listOfPoints = []
     for index in wallIndices:
         listOfPoints.append(getXY(index))
     return listOfPoints
 
-# Deprecated
-# def getNearbyPoints(point):
-#     pX = point.x
-#     pY = point.y
-#     listOfPoints = []
-#     for i in range(-3,4):
-#         for j in range(-3,4):
-#             newPointX = pX + i*resolution
-#             newPointY = pY + j*resolution
-#             point.x = newPointX
-#             point.y = newPointY
-#             listOfPoints.append(point)
-#     return listOfPoints
+def getNearbyPoints(point):
+    pX = point.x
+    pY = point.y
+    listOfPoints = []
+    for i in range(-3,4):
+        for j in range(-3,4):
+            newPointX = pX + i*resolution
+            newPointY = pY + j*resolution
+            point.x = newPointX
+            point.y = newPointY
+            listOfPoints.append(point)
+    return listOfPoints
 
 def getNearbyIndices(index):
     global radius
@@ -200,49 +201,47 @@ def getNearbyIndices(index):
                 #print(len(indexChecklist))
     return indexChecklist
 
-# Deprecated
-# def getSquare(index):
-#     pass
-# # First pass: width / 3
+def getSquare(index):
+    pass
+# First pass: width / 3
 
-# Deprecated
-# # Function: Publish Map to rviz using GridCells type
-# # Input: OccupancyGrid.data
-# def publishCells01(grid):
-#     global wallIndices
-#     global thicc
-#
-#     # Initialize variables
-#     k=0
-#     cells = GridCells()
-#     cells.header.frame_id = 'map'
-#     cells.cell_width = resolution
-#     cells.cell_height = resolution
-#
-#     for i in range(0,height): #height should be set to hieght of grid
-#         for j in range(0,width): #width should be set to width of grid
-#
-#             # grid values are probability percentages of occupancy. The following condition gives all the cells where
-#             # occupancy probability is more than 50%
-#             if (grid[k] > 50):
-#                 index = i*width+j
-#                 point=Point()
-#                 point.z=0
-#                 # 0.5*resolution moves the point to the center of the grid cell
-#                 wallX = (j*resolution)+offsetX + (0.5 * resolution)
-#                 wallY = (i*resolution)+offsetY + (0.5 * resolution)
-#                 for k in range(0,6):
-#                     for m in range(0,6):
-#                         point.x = wallX + (k-3)*resolution
-#                         point.y= wallY + (m-3)*resolution
-#                         cells.cells.append(point)
-#                         indexCheck = index + width*m + k
-#                         # Store a list of Wall Indices - for checking neighbors
-#                         if indexCheck not in wallIndices:
-#                             wallIndices.append(indexCheck)
-#             k = k + 1
-#     # Display walls in rviz
-#     mapPub.publish(cells)
+# Function: Publish Map to rviz using GridCells type
+# Input: OccupancyGrid.data
+def publishCells01(grid):
+    global wallIndices
+    global thicc
+
+    # Initialize variables
+    k=0
+    cells = GridCells()
+    cells.header.frame_id = 'map'
+    cells.cell_width = resolution
+    cells.cell_height = resolution
+
+    for i in range(0,height): #height should be set to hieght of grid
+        for j in range(0,width): #width should be set to width of grid
+
+            # grid values are probability percentages of occupancy. The following condition gives all the cells where
+            # occupancy probability is more than 50%
+            if (grid[k] > 50):
+                index = i*width+j
+                point=Point()
+                point.z=0
+                # 0.5*resolution moves the point to the center of the grid cell
+                wallX = (j*resolution)+offsetX + (0.5 * resolution)
+                wallY = (i*resolution)+offsetY + (0.5 * resolution)
+                for k in range(0,6):
+                    for m in range(0,6):
+                        point.x = wallX + (k-3)*resolution
+                        point.y= wallY + (m-3)*resolution
+                        cells.cells.append(point)
+                        indexCheck = index + width*m + k
+                        # Store a list of Wall Indices - for checking neighbors
+                        if indexCheck not in wallIndices:
+                            wallIndices.append(indexCheck)
+            k = k + 1
+    # Display walls in rviz
+    mapPub.publish(cells)
 
 #Groups cells together to "optimize" the Astar algorithm
 # def resizeCells(rfactor = 0):
@@ -278,37 +277,37 @@ def getNearbyIndices(index):
 
 
 
-# Deprecated
-# def getGridUpdate(grid):
-#     global gridIndices
-#
-#     # Initialize variables
-#     cells = GridCells()
-#     cells.header.frame_id = 'map'
-#     cells.cell_width = resolution
-#     cells.cell_height = resolution
-#     k = 0
-#
-#     for i in range(0,height):
-#         for j in range(0,width):
-#             if (grid[k] < 50):
-#                 indexChecklist = getNearbyIndices(k)
-#                 for index in indexChecklist:
-#                     if index not in wallIndices:
-#                         wallIndices.append(index)
-#                 k = k + 1
-#     gridIndices = 1
-#     wallPoints = getPointsFromIndices(wallIndices)
-#     #print("Length of wallPoints: ",len(wallIndices))
-#     for point in wallPoints:
-#         outPoint = Point()
-#         outPoint.x = point[0]
-#         outPoint.y = point[1]
-#         outPoint.z = 0
-#
-#         cells.cells.append(outPoint)
-#         #print(point)
-#     mapPub.publish(cells)
+
+def getGridUpdate(grid):
+    global gridIndices
+
+    # Initialize variables
+    cells = GridCells()
+    cells.header.frame_id = 'map'
+    cells.cell_width = resolution
+    cells.cell_height = resolution
+    k = 0
+
+    for i in range(0,height):
+        for j in range(0,width):
+            if (grid[k] < 50):
+                indexChecklist = getNearbyIndices(k)
+                for index in indexChecklist:
+                    if index not in wallIndices:
+                        wallIndices.append(index)
+                k = k + 1
+    gridIndices = 1
+    wallPoints = getPointsFromIndicies(wallIndices)
+    #print("Length of wallPoints: ",len(wallIndices))
+    for point in wallPoints:
+        outPoint = Point()
+        outPoint.x = point[0]
+        outPoint.y = point[1]
+        outPoint.z = 0
+
+        cells.cells.append(outPoint)
+        #print(point)
+    mapPub.publish(cells)
 
 
 # Function:
@@ -362,9 +361,8 @@ def getXY(index):
     x = (index%width)*resolution+offsetX + (0.5 * resolution)
     return x, y
 
-# Deprecated
-# def getAngleBetweenIndices(startIndex,goalIndex):
-#     pass
+def getAngleBetweenIndices(startIndex,goalIndex):
+    pass
 
 # Function: Converts a Pose message into a list of
 # Input: Pose() Message
@@ -373,9 +371,8 @@ def convertPose(myPose):
     print(type(myPose))
     typePoseCove = type(PoseWithCovarianceStamped())
     typePoseStamp = type(PoseStamped())
-    typePose = type(Pose())
-    myType = type(myPose)
-    if myType == typePoseCove:
+    typePose = type(myPose)
+    if typePose == typePoseCove:
         #
         # Where Yaw is the rotation about the Z-Axis
         q = [myPose.pose.pose.orientation.x,
@@ -384,24 +381,16 @@ def convertPose(myPose):
     		myPose.pose.pose.orientation.w]
         xPos = myPose.pose.pose.position.x
         yPos = myPose.pose.pose.position.y
-    elif myType == typePoseStamp:
+    elif typePose == typePoseStamp:
         q = [myPose.pose.orientation.x,
     		myPose.pose.orientation.y,
     		myPose.pose.orientation.z,
     		myPose.pose.orientation.w]
         xPos = myPose.pose.position.x
         yPos = myPose.pose.position.y
-    elif myType == typePose:
-        q = [myPose.orientation.x,
-    		myPose.orientation.y,
-    		myPose.orientation.z,
-    		myPose.orientation.w]
-        xPos = myPose.position.x
-        yPos = myPose.position.y
-
 
     (roll, pitch, yaw) = euler_from_quaternion(q)
-    #print(roll," ",pitch,"",yaw)
+
     return [xPos, yPos, yaw]
 
 # Function: Given two indices, locate the center between them
@@ -689,7 +678,7 @@ def wayposes(waypointList):
         # Add new PoseStamped Message to list of waypoint Poses
         wayPoses.append(lastPose)
         if (waypoint+1 < range(1,len(waypointList))):
-            turtle.navToPose(lastPose)
+            turtle.navToPose(waypointList[waypoint+1])
             aStar(waypointList[waypoint], waypointList[-1])
 
     print(" Path: Generated List of Poses")
@@ -711,11 +700,10 @@ class Robot:
     # Input:
     # Output:
     def __init__(self):
-        global _current
         self._current = Pose() # Position and orientation of the robot
         self._odom_list = tf.TransformListener() # Subscribe to transform messages
-        rospy.Timer(rospy.Duration(.1), self.timerCallback) # Setup callback - not hard real-time
-#        self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
+        rospy.Timer(rospy.Duration(.1), timerCallback) # Setup callback - not hard real-time
+        self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
         #rospy.Subscriber('goto', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
 
@@ -730,7 +718,7 @@ class Robot:
         self._odom_list.waitForTransform('odom', 'base_link', rospy.Time.now(), rospy.Duration(1.0))
         # transform the nav goal from the global coordinate system to the robot's coordinate system
         GoalPoseStamped = self._odom_list.transformPose('base_link', goal)
-        GoalPose = convertPose(GoalPoseStamped)
+        GoalPose = convertPose(GoalPoseStamped.pose)
         xGoal = GoalPose[0] # Desired X
         yGoal = GoalPose[1] # Desired Y
         yawGoal = GoalPose[2] # Desired yaw - angle about z axis
@@ -766,38 +754,14 @@ class Robot:
         driveStraight(.1,.45,_DEBUG_)
         rotate(135,True,_DEBUG_)
 
-    # Function:
-    # Input:
-    # Output:
-    def timerCallback(self,evprent):
-        global _current
-    	# Wait for and get the transform between two frames
-    	self._odom_list.waitForTransform('/odom', '/base_footprint', rospy.Time(0), rospy.Duration(1.0))
-    	(position, orientation) = self._odom_list.lookupTransform('/odom', '/base_footprint', rospy.Time(0))
-       	# Save the current position and orientation
-    	self._current.position.x = position[0]
-    	self._current.position.y = position[1]
-    	self._current.orientation.x = orientation[0]
-    	self._current.orientation.y = orientation[1]
-    	self._current.orientation.z = orientation[2]
-    	self._current.orientation.w = orientation[3]
-    	# Create a quaternion
-       	q = [self._current.orientation.x,
-    		self._current.orientation.y,
-    		self._current.orientation.z,
-    		self._current.orientation.w]
-    	# convert the quaternion to roll pitch yaw
-    	(roll, pitch, yaw) = euler_from_quaternion(q)
-        print(yaw)
-
 # ---------------------------- Robot Movement Functions ------------------------ #
 
 # Function:
 # Input:
 # Output:
-def driveStraight(speed, distance, _DEBUG_=False):
+def driveStraight(self, speed, distance, _DEBUG_=False):
 	# Drive both wheels at the same speed for a set distance
-    spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
+    self.spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
     #_DEBUG_ = True
 
     interval = .01 # [seconds] Check current position against goal position after this time interval
@@ -805,7 +769,7 @@ def driveStraight(speed, distance, _DEBUG_=False):
     v_right = speed # [m/s]
     distance = distance # [m]
 
-    origin = copy.deepcopy(turtle._current)
+    origin = copy.deepcopy(self._current)
     currentPose = convertPose(origin)
     initial_x = current_x = currentPose[0]
     initial_y = current_y = currentPose[1]
@@ -818,8 +782,8 @@ def driveStraight(speed, distance, _DEBUG_=False):
     distanceToGo = distance - distanceTraveled
 
     while distanceToGo > 0:
-        spinWheels(v_left, v_right, interval)
-        currentPose = convertPose(copy.deepcopy(turtle._current))
+        self.spinWheels(v_left, v_right, interval)
+        currentPose = convertPose(copy.deepcopy(self._current))
         current_x = currentPose[0]
         current_y = currentPose[1]
 
@@ -836,7 +800,7 @@ def driveStraight(speed, distance, _DEBUG_=False):
 # Function:
 # Input:
 # Output:
-def spinWheels(v_left, v_right, forTime):
+def spinWheels(self, v_left, v_right, forTime):
 	# Spin the left and right wheels at set velocities for a length of time
 
     wheelbase = 0.16 # [meters] based on wheelbase http://www.robotis.us/turtlebot-3-burger-us/
@@ -845,22 +809,21 @@ def spinWheels(v_left, v_right, forTime):
     linearVel = (v_right+v_left)/2
     angularVel = (v_right-v_left)/wheelbase
     timeDrive = time.time() + forTime
-    Twist = _get_twist(linearVel,angularVel)
+    Twist = self._get_twist(linearVel,angularVel)
 
     # Drive wheels for set amount of time
     while (time.time() < timeDrive):
-        #turtle._vel_pub.publish(Twist)
-        _vel_pub.publish(Twist)
+        self._vel_pub.publish(Twist)
+
     # Stop the robot - to be safe
-    StopTwist = _get_twist(0,0)
-    #turtle._vel_pub.publish(StopTwist)
-    _vel_pub.publish(Twist)
+    StopTwist = self._get_twist(0,0)
+    self._vel_pub.publish(StopTwist)
 
 
 # Function:
 # Input:
 # Output:
-def rotate(angle, deg=False, _DEBUG_=False):
+def rotate(self,angle, deg=False, _DEBUG_=False):
 	# Rotate by an angle [radians]
 	# self.rotate(angle,True) to use degrees instead of radians
 
@@ -873,14 +836,14 @@ def rotate(angle, deg=False, _DEBUG_=False):
     if deg == True: # Convert degrees to radians
         angle = math.radians(angle)
 
-    spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
-    origin = copy.deepcopy(turtle._current) # Current orientation
+    self.spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
+    origin = copy.deepcopy(self._current) # Current orientation
     q = [origin.orientation.x,
 		origin.orientation.y,
 		origin.orientation.z,
 		origin.orientation.w] # quaternion nonsense
     (roll, pitch, yaw) = euler_from_quaternion(q)
-    initialPose = convertPose(copy.deepcopy(turtle._current))
+    initialPose = convertPose(copy.deepcopy(self._current))
     currentYaw = initialPose[2]
     goalYaw = angle + currentYaw # Goal angle
 
@@ -892,26 +855,154 @@ def rotate(angle, deg=False, _DEBUG_=False):
 
     while abs(goalYaw - currentYaw) > tolerance:
         if (angle < 0): # Clockwise
-            spinWheels(speed,-speed,interval)
+            self.spinWheels(speed,-speed,interval)
         else: # Withershins
-            spinWheels(-speed,speed,interval)
-        currentYaw = convertPose(copy.deepcopy(turtle._current))[2]
+            self.spinWheels(-speed,speed,interval)
+        currentYaw = convertPose(copy.deepcopy(self._current))[2]
         if _DEBUG_:
             print ("Current Angle: ",currentYaw," Distance To Go: ",abs(goalYaw-currentYaw))
+
+# def ExtremeRotate(self, rotation):
+#     """
+#         This method should populate a ??? message type and publish it to ??? in order to spin the robot
+#     """
+#     "origin = copy.deepcopy(self._current)"
+#
+#
+#     print ("Starting to rotate")
+#
+#     #convert incoming degrees angle to radians
+#     radian_angle = rotation*math.pi/180
+#     print "angle :", angle
+#
+#     q = [self._current.orientation.x,
+#          self._current.orientation.y,
+#          self._current.orientation.z,
+#          self._current.orientation.w]
+#
+#     (roll, pitch, yaw) = euler_from_quaternion(q)
+#
+#     #calculate desired angle
+#     desired_angle = radian_angle + yaw
+#
+#     if (desired_angle > math.pi):
+#         desired_angle += -2*math.pi
+#     elif (desired_angle < -math.pi):
+#         desired_angle += 2*math.pi
+#
+#     #create a new message of the type twist()
+#     rotate_message = Twist()
+#
+#     #fix direction turning
+#     rotate_message.linear.x = 0.0
+#     if (radian_angle > 0):
+#         rotate_message.angular.z = 0.4
+#     elif (radian_angle < 0):
+#         rotate_message.angular.z = -0.4
+#
+#     #testing
+#     print desired_angle
+#     print yaw
+#
+#     #To get to desired angle from current angle
+#     while (abs(desired_angle - yaw) > (math.pi/90)):
+#         q = [self._current.orientation.x,
+#              self._current.orientation.y,
+#              self._current.orientation.z,
+#              self._current.orientation.w]
+#         (roll, pitch, yaw) = euler_from_quaternion(q)
+#         self._vel_pub.publish(rotate_message)
+#
+#     print desired_angle
+#     print yaw
+#     rotate_message.angular.z = 0.0
+#     self._vel_pub.publish(rotate_message)
+
+# def driveStraighter(self, speed,distance):
+ #        """
+ #            This method should populate a
+ #             message type and publish it to nav_goal in order to move the robot
+ #        """
+ #        #self.spinWheels(speed, speed, distance/speed)
+ #        #start driving
+ #        print ("Begining to drive")
+ #        origin = copy.deepcopy(self._current) #use this
+ #
+ #        #creating a message of the type twist()
+ #        drive_message = Twist()
+ #
+ #        #initilizing linear and angular components
+ #        drive_message.linear.x = speed
+ #        drive_message.angular.z = 0
+ #
+ #        initialx = origin.position.x
+ #        initialy = origin.position.y
+ #        # to check if we reach destination
+ #        reached_destination = False
+ #        while(not reached_destination):
+ #
+ #            #get current x and y position of our robot
+ #            currentx = self._current.position.x
+ #            currenty = self._current.position.y
+ #            #Use distance formula to find the distance
+ #            current_distance = math.sqrt(((currentx - initialx)**2) +((currenty - initialy)**2 ))
+ #
+ #            if(current_distance >= distance):
+ #                reached_destination = True
+ #                drive_message.linear.x = 0
+ #                self._vel_pub.publish(drive_message)
+ #                print "reached_destination"
+ #                print "distance travelled",current_distance
+ #
+ #            #to ramp up speed when distance travelled is less than 80% of the journey
+ #            elif(current_distance < 0.8*distance):
+ #                drive_message.linear.x = 2 * speed
+ #                #print "my speed2",drive_message.linear.x
+ #
+ #            #to slow down when destination is close
+ #            elif(current_distance >= 0.8*distance):
+ #                drive_message.linear.x = 0.5 * speed
+ #
+ #            #to often reach faster to any goal
+ #            else:
+ #                drive_message.linear.x = 2 * speed
+ #            self._vel_pub.publish(drive_message)
+
+
 
 # ------------------------------- Robot Helper Functions ---------------------------- #
 
 # Function:
 # Input:
 # Output:
-def _get_twist(linear, angular):
+def _get_twist(self, linear, angular):
 	# Construct Twist message for differential drive robot based on linear and angular velocity
 	twist = Twist()
 	twist.linear.x = linear
 	twist.angular.z = angular
 	return twist
 
-
+# Function:
+# Input:
+# Output:
+def timerCallback(self,evprent):
+	# Wait for and get the transform between two frames
+	self._odom_list.waitForTransform('/odom', '/base_footprint', rospy.Time(0), rospy.Duration(1.0))
+	(position, orientation) = self._odom_list.lookupTransform('/odom', '/base_footprint', rospy.Time(0))
+   	# Save the current position and orientation
+	self._current.position.x = position[0]
+	self._current.position.y = position[1]
+	self._current.orientation.x = orientation[0]
+	self._current.orientation.y = orientation[1]
+	self._current.orientation.z = orientation[2]
+	self._current.orientation.w = orientation[3]
+	# Create a quaternion
+   	q = [self._current.orientation.x,
+		self._current.orientation.y,
+		self._current.orientation.z,
+		self._current.orientation.w]
+	# convert the quaternion to roll pitch yaw
+	(roll, pitch, yaw) = euler_from_quaternion(q)
 
 # Function:
 # Input:
@@ -980,9 +1071,6 @@ def run():
     global wayGridPub
     global wayPathPub
     global turtle
-    global _current
-
-    global _vel_pub
 
 
     # Set Important Indices as Global Variables
@@ -1004,8 +1092,7 @@ def run():
     print("Initializing Pubs and Subs")
 
     # Set Pubs and Subs
-    #rospy.init_node('lab3')
-    rospy.init_node('drive_base')
+    rospy.init_node('lab3')
     mapSub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     mapPub = rospy.Publisher("/map_check", GridCells, queue_size=1)
     startPub = rospy.Publisher("/start_cell", GridCells, queue_size=1)
@@ -1020,11 +1107,8 @@ def run():
     #goal_sub = rospy.Subscriber('goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
 
-    _vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
-
     # Wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
-
     print("Pubs and Subs Initialized")
     print("- - Begin Operation - -")
 
