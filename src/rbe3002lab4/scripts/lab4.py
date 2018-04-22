@@ -915,7 +915,7 @@ class Robot:
         (roll, pitch, yaw) = euler_from_quaternion(q)
 
         #calculate desired angle
-        desired_angle = radian_angle + startYaw1aw
+        desired_angle = radian_angle + startYaw1
 
         if (desired_angle > math.pi):
             desired_angle += -2 #*math.pi
@@ -937,7 +937,7 @@ class Robot:
         # print yaw
 
         #To get to desired angle from current angle
-        while (abs(desired_angle - startYaw1aw) > (math.pi/90)):
+        while (abs(desired_angle - startYaw1) > (math.pi/90)):
             q = [self._current.orientation.x,
                  self._current.orientation.y,
                  self._current.orientation.z,
