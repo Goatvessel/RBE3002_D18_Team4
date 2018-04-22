@@ -13,6 +13,7 @@ from tf.transformations import euler_from_quaternion
 from tf.transformations import quaternion_from_euler
 import tf
 import numpy
+import copy
 import math
 import rospy, tf, numpy, math
 from Queue import PriorityQueue
@@ -368,10 +369,13 @@ def getAngleBetweenIndices(startIndex,goalIndex):
 # Input: Pose() Message
 # Output: [X-Position, Y-Position, Yaw]
 def convertPose(myPose):
-    print(type(myPose))
+    #print(type(myPose))
     typePoseCove = type(PoseWithCovarianceStamped())
     typePoseStamp = type(PoseStamped())
     typePose = type(myPose)
+    q = []
+    xPos = []
+    yPos = []
     if typePose == typePoseCove:
         #
         # Where Yaw is the rotation about the Z-Axis
@@ -389,9 +393,12 @@ def convertPose(myPose):
         xPos = myPose.pose.position.x
         yPos = myPose.pose.position.y
 
+    if len(q) == 0:
+        print('We have an issue')
     (roll, pitch, yaw) = euler_from_quaternion(q)
 
-    return [xPos, yPos, yaw]
+    #return [xPos, yPos, yaw]
+    return [xPos, yPos]
 
 # Function: Given two indices, locate the center between them
 # Input: Index A, Index B
@@ -457,7 +464,8 @@ def readGoal(goalPose):
     global goalY
     global goalYaw
     goalIndex = []
-    (goalX, goalY, goalYaw) = convertPose(goalPose)
+    #(goalX, goalY, goalYaw) = convertPose(goalPose)
+    (goalX, goalY) = convertPose(goalPose)
     goalCell = getIndex(goalX,goalY) #call getIndex function to get the index of goal cell
     #print("Goal Index: ",goalCell)
     goalIndex.append(goalCell)
@@ -588,7 +596,7 @@ def waypoints(indexList):
     waypointList = [startCell] # List of Waypoints as Map Indices
     pathList = [] # Path list from start index to goal index
     lastNode = startCell
-    pointAngle = {startCell:startYaw}
+    pointAngle = {startCell:startYaw1}
 
     print " WP: Initializing Waypoints"
     print "     - Length of indexList: ", len(indexList)
@@ -680,7 +688,7 @@ def wayposes(waypointList):
         if (waypoint+1 < range(1,len(waypointList))):
             turtle.navToPose(waypointList[waypoint+1])
             #aStar(waypointList[waypoint], waypointList[-1]) #Start current pos of robot
-            astar(startCell, waypointList[-1])
+            #astar(startCell, waypointList[-1])
     print(" Path: Generated List of Poses")
     # Generate Path Message from PoseStamped Messages
     wayPath = Path()
@@ -713,34 +721,50 @@ class Robot:
     def navToPose(self,goal):
 		# Callback function when a navigation goal is defined
 		# Extract data from Goal, rotate to Goal position, drive straight to Goal position, rotate to Goal orientation
+        global startYaw1
+        global startCell
+        startCellXY = getXY(startCell)
+        while (startCellXY is []):
+            rospy.sleep(0.1)
+
+        #Current Pose
+        #origin = copy.deepcopy(self._current)
+        #initialPose = convertPose(origin)
+        #xInitial = initialPose[0] # Current X
+        xInitial = startCellXY[0] # Current X
+        #yInitial = initialPose[1] # CUrrent Y
+        yInitial = startCellXY[1] # CUrrent Y
+        yawInitial = startYaw1 # Current Yaw.
 
         # Goal Pose
-        self._odom_list.waitForTransform('odom', 'base_link', rospy.Time.now(), rospy.Duration(1.0))
+        #self._odom_list.waitForTransform('odom', 'base_link', rospy.Time.now(), rospy.Duration(1.0))
         # transform the nav goal from the global coordinate system to the robot's coordinate system
-        GoalPoseStamped = self._odom_list.transformPose('base_link', goal)
-        GoalPose = convertPose(GoalPoseStamped.pose)
-        xGoal = GoalPose[0] # Desired X
-        yGoal = GoalPose[1] # Desired Y
-        yawGoal = GoalPose[2] # Desired yaw - angle about z axis
+        # GoalPoseStamped = self._odom_list.transformPose('base_link', goal)
+        # GoalPose = convertPose(GoalPoseStamped.pose)
+        # xGoal = GoalPose[0] # Desired X
+        # yGoal = GoalPose[1] # Desired Y
+        # yawGoal = GoalPose[2] # Desired yaw - angle about z axis
 
-        # Current Pose
-        origin = copy.deepcopy(self._current)
-        initialPose = convertPose(origin)
-        xInitial = initialPose[0] # Current X
-        yInitial = initialPose[1] # CUrrent Y
-        yawInitial = initialPose[2] # Current Yaw.
+        #using world frame to navigate instead of the robot frame
+        goalxy = getXY(goal)
+        xGoal = goalxy[0] # Desired X
+        yGoal = goalxy[1] # Desired Y
+        yawGoal = math.atan2(yGoal-yInitial,xGoal-xInitial)
+        print("goal yaw =",yawGoal)
 
         # Distance to the Goal from the Start
         straightline = math.sqrt(math.pow(xGoal,2) + math.pow(yGoal,2))
         # Angle between the Initial orientation and the Goal orientation
         initialYaw = math.atan2(yGoal,xGoal)
 
-        # Rotate to face the Goal position
-        rotate(initialYaw)
-        # Drive straight to the Goal position
-        driveStraight(.2,straightline)
         # Rotate to face the Goal orientation
-        rotate(yawGoal - initialYaw)
+        self.rotate(yawGoal - initialYaw)
+        # Drive straight to the Goal position
+        self.driveStraight(.2,straightline)
+        # Rotate to face the Goal position
+        self.rotate(initialYaw)
+
+
 
     # Function:
     # Input:
@@ -862,111 +886,103 @@ class Robot:
             if _DEBUG_:
                 print ("Current Angle: ",currentYaw," Distance To Go: ",abs(goalYaw-currentYaw))
 
-    # def ExtremeRotate(self, rotation):
-    #     """
-    #         This method should populate a ??? message type and publish it to ??? in order to spin the robot
-    #     """
-    #     "origin = copy.deepcopy(self._current)"
-    #
-    #
-    #     print ("Starting to rotate")
-    #
-    #     #convert incoming degrees angle to radians
-    #     radian_angle = rotation*math.pi/180
-    #     print "angle :", angle
-    #
-    #     q = [self._current.orientation.x,
-    #          self._current.orientation.y,
-    #          self._current.orientation.z,
-    #          self._current.orientation.w]
-    #
-    #     (roll, pitch, yaw) = euler_from_quaternion(q)
-    #
-    #     #calculate desired angle
-    #     desired_angle = radian_angle + yaw
-    #
-    #     if (desired_angle > math.pi):
-    #         desired_angle += -2*math.pi
-    #     elif (desired_angle < -math.pi):
-    #         desired_angle += 2*math.pi
-    #
-    #     #create a new message of the type twist()
-    #     rotate_message = Twist()
-    #
-    #     #fix direction turning
-    #     rotate_message.linear.x = 0.0
-    #     if (radian_angle > 0):
-    #         rotate_message.angular.z = 0.4
-    #     elif (radian_angle < 0):
-    #         rotate_message.angular.z = -0.4
-    #
-    #     #testing
-    #     print desired_angle
-    #     print yaw
-    #
-    #     #To get to desired angle from current angle
-    #     while (abs(desired_angle - yaw) > (math.pi/90)):
-    #         q = [self._current.orientation.x,
-    #              self._current.orientation.y,
-    #              self._current.orientation.z,
-    #              self._current.orientation.w]
-    #         (roll, pitch, yaw) = euler_from_quaternion(q)
-    #         self._vel_pub.publish(rotate_message)
-    #
-    #     print desired_angle
-    #     print yaw
-    #     rotate_message.angular.z = 0.0
-    #     self._vel_pub.publish(rotate_message)
+    def ExtremeRotate(self, rotation):
 
-    # def driveStraighter(self, speed,distance):
-     #        """
-     #            This method should populate a
-     #             message type and publish it to nav_goal in order to move the robot
-     #        """
-     #        #self.spinWheels(speed, speed, distance/speed)
-     #        #start driving
-     #        print ("Begining to drive")
-     #        origin = copy.deepcopy(self._current) #use this
-     #
-     #        #creating a message of the type twist()
-     #        drive_message = Twist()
-     #
-     #        #initilizing linear and angular components
-     #        drive_message.linear.x = speed
-     #        drive_message.angular.z = 0
-     #
-     #        initialx = origin.position.x
-     #        initialy = origin.position.y
-     #        # to check if we reach destination
-     #        reached_destination = False
-     #        while(not reached_destination):
-     #
-     #            #get current x and y position of our robot
-     #            currentx = self._current.position.x
-     #            currenty = self._current.position.y
-     #            #Use distance formula to find the distance
-     #            current_distance = math.sqrt(((currentx - initialx)**2) +((currenty - initialy)**2 ))
-     #
-     #            if(current_distance >= distance):
-     #                reached_destination = True
-     #                drive_message.linear.x = 0
-     #                self._vel_pub.publish(drive_message)
-     #                print "reached_destination"
-     #                print "distance travelled",current_distance
-     #
-     #            #to ramp up speed when distance travelled is less than 80% of the journey
-     #            elif(current_distance < 0.8*distance):
-     #                drive_message.linear.x = 2 * speed
-     #                #print "my speed2",drive_message.linear.x
-     #
-     #            #to slow down when destination is close
-     #            elif(current_distance >= 0.8*distance):
-     #                drive_message.linear.x = 0.5 * speed
-     #
-     #            #to often reach faster to any goal
-     #            else:
-     #                drive_message.linear.x = 2 * speed
-     #            self._vel_pub.publish(drive_message)
+        print ("Starting to rotate")
+
+        #convert incoming degrees angle to radians
+        radian_angle = rotation #0*math.pi/180
+        print "angle :", angle
+
+        q = [self._current.orientation.x,
+             self._current.orientation.y,
+             self._current.orientation.z,
+             self._current.orientation.w]
+
+        (roll, pitch, yaw) = euler_from_quaternion(q)
+
+        #calculate desired angle
+        desired_angle = radian_angle + yaw
+
+        if (desired_angle > math.pi):
+            desired_angle += -2 #*math.pi
+        elif (desired_angle < -math.pi):
+            desired_angle += 2 #*math.pi
+
+        #create a new message of the type twist()
+        rotate_message = Twist()
+
+        #fix direction turning
+        rotate_message.linear.x = 0.0
+        if (radian_angle > 0):
+            rotate_message.angular.z = 0.4
+        elif (radian_angle < 0):
+            rotate_message.angular.z = -0.4
+
+        #testing
+        print desired_angle
+        print yaw
+
+        #To get to desired angle from current angle
+        while (abs(desired_angle - yaw) > (math.pi/90)):
+            q = [self._current.orientation.x,
+                 self._current.orientation.y,
+                 self._current.orientation.z,
+                 self._current.orientation.w]
+            (roll, pitch, yaw) = euler_from_quaternion(q)
+            self._vel_pub.publish(rotate_message)
+
+        print desired_angle
+        print yaw
+        rotate_message.angular.z = 0.0
+        self._vel_pub.publish(rotate_message)
+
+    def driveStraighter(self, speed,distance):
+
+            #self.spinWheels(speed, speed, distance/speed)
+            #start driving
+            print ("Begining to drive")
+            origin = copy.deepcopy(self._current) #use this
+
+            #creating a message of the type twist()
+            drive_message = Twist()
+
+            #initilizing linear and angular components
+            drive_message.linear.x = speed
+            drive_message.angular.z = 0
+
+            initialx = origin.position.x
+            initialy = origin.position.y
+            # to check if we reach destination
+            reached_destination = False
+            while(not reached_destination):
+
+                #get current x and y position of our robot
+                currentx = self._current.position.x
+                currenty = self._current.position.y
+                #Use distance formula to find the distance
+                current_distance = math.sqrt(((currentx - initialx)**2) +((currenty - initialy)**2 ))
+
+                if(current_distance >= distance):
+                    reached_destination = True
+                    drive_message.linear.x = 0
+                    self._vel_pub.publish(drive_message)
+                    print "reached_destination"
+                    print "distance travelled",current_distance
+
+                #to ramp up speed when distance travelled is less than 80% of the journey
+                elif(current_distance < 0.8*distance):
+                    drive_message.linear.x = 2 * speed
+                    #print "my speed2",drive_message.linear.x
+
+                #to slow down when destination is close
+                elif(current_distance >= 0.8*distance):
+                    drive_message.linear.x = 0.5 * speed
+
+                #to often reach faster to any goal
+                else:
+                    drive_message.linear.x = 2 * speed
+                self._vel_pub.publish(drive_message)
 
 
 
@@ -1002,7 +1018,13 @@ class Robot:
     		self._current.orientation.z,
     		self._current.orientation.w]
     	# convert the quaternion to roll pitch yaw
-    	(roll, pitch, yaw) = euler_from_quaternion(q)
+        (roll, pitch, self.yaw) = euler_from_quaternion(q)
+
+        global startYaw1
+        startYaw1 = self.yaw
+        global startCell
+        startCell = getIndex(position[0],position[1])
+        #print startCell
 
     # Function:
     # Input:
@@ -1082,7 +1104,7 @@ def run():
     # Initialize Variables
 
     wallIndices = []
-    turtle = Robot()
+
     startCell = None
     goalCell = None
     radius = 2
@@ -1111,7 +1133,7 @@ def run():
     rospy.sleep(1)
     print("Pubs and Subs Initialized")
     print("- - Begin Operation - -")
-
+    turtle = Robot()
     while (not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         rospy.sleep(.5)
