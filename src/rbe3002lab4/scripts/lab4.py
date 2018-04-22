@@ -679,8 +679,8 @@ def wayposes(waypointList):
         wayPoses.append(lastPose)
         if (waypoint+1 < range(1,len(waypointList))):
             turtle.navToPose(waypointList[waypoint+1])
-            aStar(waypointList[waypoint], waypointList[-1])
-
+            #aStar(waypointList[waypoint], waypointList[-1]) #Start current pos of robot
+            astar(startCell, waypointList[-1])
     print(" Path: Generated List of Poses")
     # Generate Path Message from PoseStamped Messages
     wayPath = Path()
@@ -702,7 +702,7 @@ class Robot:
     def __init__(self):
         self._current = Pose() # Position and orientation of the robot
         self._odom_list = tf.TransformListener() # Subscribe to transform messages
-        rospy.Timer(rospy.Duration(.1), timerCallback) # Setup callback - not hard real-time
+        rospy.Timer(rospy.Duration(.1), self.timerCallback) # Setup callback - not hard real-time
         self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
         #rospy.Subscriber('goto', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
@@ -754,304 +754,304 @@ class Robot:
         driveStraight(.1,.45,_DEBUG_)
         rotate(135,True,_DEBUG_)
 
-# ---------------------------- Robot Movement Functions ------------------------ #
+    # ---------------------------- Robot Movement Functions ------------------------ #
 
-# Function:
-# Input:
-# Output:
-def driveStraight(self, speed, distance, _DEBUG_=False):
-	# Drive both wheels at the same speed for a set distance
-    self.spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
-    #_DEBUG_ = True
+    # Function:
+    # Input:
+    # Output:
+    def driveStraight(self, speed, distance, _DEBUG_=False):
+    	# Drive both wheels at the same speed for a set distance
+        self.spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
+        #_DEBUG_ = True
 
-    interval = .01 # [seconds] Check current position against goal position after this time interval
-    v_left = speed  # [m/s]
-    v_right = speed # [m/s]
-    distance = distance # [m]
+        interval = .01 # [seconds] Check current position against goal position after this time interval
+        v_left = speed  # [m/s]
+        v_right = speed # [m/s]
+        distance = distance # [m]
 
-    origin = copy.deepcopy(self._current)
-    currentPose = convertPose(origin)
-    initial_x = current_x = currentPose[0]
-    initial_y = current_y = currentPose[1]
-    current_yaw = currentPose[2]
+        origin = copy.deepcopy(self._current)
+        currentPose = convertPose(origin)
+        initial_x = current_x = currentPose[0]
+        initial_y = current_y = currentPose[1]
+        current_yaw = currentPose[2]
 
-    goal_location_x = initial_x + distance*math.cos(current_yaw)
-    goal_location_y = initial_y + distance*math.sin(current_yaw)
+        goal_location_x = initial_x + distance*math.cos(current_yaw)
+        goal_location_y = initial_y + distance*math.sin(current_yaw)
 
-    distanceTraveled = 0
-    distanceToGo = distance - distanceTraveled
+        distanceTraveled = 0
+        distanceToGo = distance - distanceTraveled
 
-    while distanceToGo > 0:
-        self.spinWheels(v_left, v_right, interval)
-        currentPose = convertPose(copy.deepcopy(self._current))
-        current_x = currentPose[0]
-        current_y = currentPose[1]
+        while distanceToGo > 0:
+            self.spinWheels(v_left, v_right, interval)
+            currentPose = convertPose(copy.deepcopy(self._current))
+            current_x = currentPose[0]
+            current_y = currentPose[1]
 
-        distanceTraveled = math.sqrt(math.pow(current_x - initial_x,2) + math.pow(current_y - initial_y,2))
-        distanceToGo = distance - distanceTraveled # Update remaining distance
-		# Debug print current position, distance traveled, and remaining distance to travel
-        if _DEBUG_:
-            print("Current X: ",current_x)
-            print("Current Y: ",current_y)
-            print("Distance Traveled: ",distanceTraveled)
-            print("Distance To Go: ", distanceToGo)
-            print("") # Newline
+            distanceTraveled = math.sqrt(math.pow(current_x - initial_x,2) + math.pow(current_y - initial_y,2))
+            distanceToGo = distance - distanceTraveled # Update remaining distance
+    		# Debug print current position, distance traveled, and remaining distance to travel
+            if _DEBUG_:
+                print("Current X: ",current_x)
+                print("Current Y: ",current_y)
+                print("Distance Traveled: ",distanceTraveled)
+                print("Distance To Go: ", distanceToGo)
+                print("") # Newline
 
-# Function:
-# Input:
-# Output:
-def spinWheels(self, v_left, v_right, forTime):
-	# Spin the left and right wheels at set velocities for a length of time
+    # Function:
+    # Input:
+    # Output:
+    def spinWheels(self, v_left, v_right, forTime):
+    	# Spin the left and right wheels at set velocities for a length of time
 
-    wheelbase = 0.16 # [meters] based on wheelbase http://www.robotis.us/turtlebot-3-burger-us/
+        wheelbase = 0.16 # [meters] based on wheelbase http://www.robotis.us/turtlebot-3-burger-us/
 
-    # Generate Twist Message
-    linearVel = (v_right+v_left)/2
-    angularVel = (v_right-v_left)/wheelbase
-    timeDrive = time.time() + forTime
-    Twist = self._get_twist(linearVel,angularVel)
+        # Generate Twist Message
+        linearVel = (v_right+v_left)/2
+        angularVel = (v_right-v_left)/wheelbase
+        timeDrive = time.time() + forTime
+        Twist = self._get_twist(linearVel,angularVel)
 
-    # Drive wheels for set amount of time
-    while (time.time() < timeDrive):
-        self._vel_pub.publish(Twist)
+        # Drive wheels for set amount of time
+        while (time.time() < timeDrive):
+            self._vel_pub.publish(Twist)
 
-    # Stop the robot - to be safe
-    StopTwist = self._get_twist(0,0)
-    self._vel_pub.publish(StopTwist)
-
-
-# Function:
-# Input:
-# Output:
-def rotate(self,angle, deg=False, _DEBUG_=False):
-	# Rotate by an angle [radians]
-	# self.rotate(angle,True) to use degrees instead of radians
-
-    tolerance = 0.04 # [radians]
-    speed = 0.04 # [m/s]
-    interval = 0.01 # [s] Time between checking Goal Yaw vs Current Yaw
-    _DEBUG_ = True
-    if angle == 0: # Easy case - rotate zero degrees
-		return
-    if deg == True: # Convert degrees to radians
-        angle = math.radians(angle)
-
-    self.spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
-    origin = copy.deepcopy(self._current) # Current orientation
-    q = [origin.orientation.x,
-		origin.orientation.y,
-		origin.orientation.z,
-		origin.orientation.w] # quaternion nonsense
-    (roll, pitch, yaw) = euler_from_quaternion(q)
-    initialPose = convertPose(copy.deepcopy(self._current))
-    currentYaw = initialPose[2]
-    goalYaw = angle + currentYaw # Goal angle
-
-    # Take into account [-pi,pi] range
-    if goalYaw > math.pi:
-        goalYaw = math.pi-goalYaw
-    elif goalYaw < -math.pi:
-         goalYaw = math.pi+goalYaw
-
-    while abs(goalYaw - currentYaw) > tolerance:
-        if (angle < 0): # Clockwise
-            self.spinWheels(speed,-speed,interval)
-        else: # Withershins
-            self.spinWheels(-speed,speed,interval)
-        currentYaw = convertPose(copy.deepcopy(self._current))[2]
-        if _DEBUG_:
-            print ("Current Angle: ",currentYaw," Distance To Go: ",abs(goalYaw-currentYaw))
-
-# def ExtremeRotate(self, rotation):
-#     """
-#         This method should populate a ??? message type and publish it to ??? in order to spin the robot
-#     """
-#     "origin = copy.deepcopy(self._current)"
-#
-#
-#     print ("Starting to rotate")
-#
-#     #convert incoming degrees angle to radians
-#     radian_angle = rotation*math.pi/180
-#     print "angle :", angle
-#
-#     q = [self._current.orientation.x,
-#          self._current.orientation.y,
-#          self._current.orientation.z,
-#          self._current.orientation.w]
-#
-#     (roll, pitch, yaw) = euler_from_quaternion(q)
-#
-#     #calculate desired angle
-#     desired_angle = radian_angle + yaw
-#
-#     if (desired_angle > math.pi):
-#         desired_angle += -2*math.pi
-#     elif (desired_angle < -math.pi):
-#         desired_angle += 2*math.pi
-#
-#     #create a new message of the type twist()
-#     rotate_message = Twist()
-#
-#     #fix direction turning
-#     rotate_message.linear.x = 0.0
-#     if (radian_angle > 0):
-#         rotate_message.angular.z = 0.4
-#     elif (radian_angle < 0):
-#         rotate_message.angular.z = -0.4
-#
-#     #testing
-#     print desired_angle
-#     print yaw
-#
-#     #To get to desired angle from current angle
-#     while (abs(desired_angle - yaw) > (math.pi/90)):
-#         q = [self._current.orientation.x,
-#              self._current.orientation.y,
-#              self._current.orientation.z,
-#              self._current.orientation.w]
-#         (roll, pitch, yaw) = euler_from_quaternion(q)
-#         self._vel_pub.publish(rotate_message)
-#
-#     print desired_angle
-#     print yaw
-#     rotate_message.angular.z = 0.0
-#     self._vel_pub.publish(rotate_message)
-
-# def driveStraighter(self, speed,distance):
- #        """
- #            This method should populate a
- #             message type and publish it to nav_goal in order to move the robot
- #        """
- #        #self.spinWheels(speed, speed, distance/speed)
- #        #start driving
- #        print ("Begining to drive")
- #        origin = copy.deepcopy(self._current) #use this
- #
- #        #creating a message of the type twist()
- #        drive_message = Twist()
- #
- #        #initilizing linear and angular components
- #        drive_message.linear.x = speed
- #        drive_message.angular.z = 0
- #
- #        initialx = origin.position.x
- #        initialy = origin.position.y
- #        # to check if we reach destination
- #        reached_destination = False
- #        while(not reached_destination):
- #
- #            #get current x and y position of our robot
- #            currentx = self._current.position.x
- #            currenty = self._current.position.y
- #            #Use distance formula to find the distance
- #            current_distance = math.sqrt(((currentx - initialx)**2) +((currenty - initialy)**2 ))
- #
- #            if(current_distance >= distance):
- #                reached_destination = True
- #                drive_message.linear.x = 0
- #                self._vel_pub.publish(drive_message)
- #                print "reached_destination"
- #                print "distance travelled",current_distance
- #
- #            #to ramp up speed when distance travelled is less than 80% of the journey
- #            elif(current_distance < 0.8*distance):
- #                drive_message.linear.x = 2 * speed
- #                #print "my speed2",drive_message.linear.x
- #
- #            #to slow down when destination is close
- #            elif(current_distance >= 0.8*distance):
- #                drive_message.linear.x = 0.5 * speed
- #
- #            #to often reach faster to any goal
- #            else:
- #                drive_message.linear.x = 2 * speed
- #            self._vel_pub.publish(drive_message)
+        # Stop the robot - to be safe
+        StopTwist = self._get_twist(0,0)
+        self._vel_pub.publish(StopTwist)
 
 
+    # Function:
+    # Input:
+    # Output:
+    def rotate(self,angle, deg=False, _DEBUG_=False):
+    	# Rotate by an angle [radians]
+    	# self.rotate(angle,True) to use degrees instead of radians
 
-# ------------------------------- Robot Helper Functions ---------------------------- #
+        tolerance = 0.04 # [radians]
+        speed = 0.04 # [m/s]
+        interval = 0.01 # [s] Time between checking Goal Yaw vs Current Yaw
+        _DEBUG_ = True
+        if angle == 0: # Easy case - rotate zero degrees
+    		return
+        if deg == True: # Convert degrees to radians
+            angle = math.radians(angle)
 
-# Function:
-# Input:
-# Output:
-def _get_twist(self, linear, angular):
-	# Construct Twist message for differential drive robot based on linear and angular velocity
-	twist = Twist()
-	twist.linear.x = linear
-	twist.angular.z = angular
-	return twist
+        self.spinWheels(0,0,.1) # Initialize odometry by spinning wheels with no velocity - !FIXME There must be a better way
+        origin = copy.deepcopy(self._current) # Current orientation
+        q = [origin.orientation.x,
+    		origin.orientation.y,
+    		origin.orientation.z,
+    		origin.orientation.w] # quaternion nonsense
+        (roll, pitch, yaw) = euler_from_quaternion(q)
+        initialPose = convertPose(copy.deepcopy(self._current))
+        currentYaw = initialPose[2]
+        goalYaw = angle + currentYaw # Goal angle
 
-# Function:
-# Input:
-# Output:
-def timerCallback(self,evprent):
-	# Wait for and get the transform between two frames
-	self._odom_list.waitForTransform('/odom', '/base_footprint', rospy.Time(0), rospy.Duration(1.0))
-	(position, orientation) = self._odom_list.lookupTransform('/odom', '/base_footprint', rospy.Time(0))
-   	# Save the current position and orientation
-	self._current.position.x = position[0]
-	self._current.position.y = position[1]
-	self._current.orientation.x = orientation[0]
-	self._current.orientation.y = orientation[1]
-	self._current.orientation.z = orientation[2]
-	self._current.orientation.w = orientation[3]
-	# Create a quaternion
-   	q = [self._current.orientation.x,
-		self._current.orientation.y,
-		self._current.orientation.z,
-		self._current.orientation.w]
-	# convert the quaternion to roll pitch yaw
-	(roll, pitch, yaw) = euler_from_quaternion(q)
+        # Take into account [-pi,pi] range
+        if goalYaw > math.pi:
+            goalYaw = math.pi-goalYaw
+        elif goalYaw < -math.pi:
+             goalYaw = math.pi+goalYaw
 
-# Function:
-# Input:
-# Output:
-def planTraj(self, b, t):
-	pass
+        while abs(goalYaw - currentYaw) > tolerance:
+            if (angle < 0): # Clockwise
+                self.spinWheels(speed,-speed,interval)
+            else: # Withershins
+                self.spinWheels(-speed,speed,interval)
+            currentYaw = convertPose(copy.deepcopy(self._current))[2]
+            if _DEBUG_:
+                print ("Current Angle: ",currentYaw," Distance To Go: ",abs(goalYaw-currentYaw))
 
-	"""
-	Bonus Question:  compute the coefs for a cubic polynomial (hint:  you did this in 3001)
-	"""
+    # def ExtremeRotate(self, rotation):
+    #     """
+    #         This method should populate a ??? message type and publish it to ??? in order to spin the robot
+    #     """
+    #     "origin = copy.deepcopy(self._current)"
+    #
+    #
+    #     print ("Starting to rotate")
+    #
+    #     #convert incoming degrees angle to radians
+    #     radian_angle = rotation*math.pi/180
+    #     print "angle :", angle
+    #
+    #     q = [self._current.orientation.x,
+    #          self._current.orientation.y,
+    #          self._current.orientation.z,
+    #          self._current.orientation.w]
+    #
+    #     (roll, pitch, yaw) = euler_from_quaternion(q)
+    #
+    #     #calculate desired angle
+    #     desired_angle = radian_angle + yaw
+    #
+    #     if (desired_angle > math.pi):
+    #         desired_angle += -2*math.pi
+    #     elif (desired_angle < -math.pi):
+    #         desired_angle += 2*math.pi
+    #
+    #     #create a new message of the type twist()
+    #     rotate_message = Twist()
+    #
+    #     #fix direction turning
+    #     rotate_message.linear.x = 0.0
+    #     if (radian_angle > 0):
+    #         rotate_message.angular.z = 0.4
+    #     elif (radian_angle < 0):
+    #         rotate_message.angular.z = -0.4
+    #
+    #     #testing
+    #     print desired_angle
+    #     print yaw
+    #
+    #     #To get to desired angle from current angle
+    #     while (abs(desired_angle - yaw) > (math.pi/90)):
+    #         q = [self._current.orientation.x,
+    #              self._current.orientation.y,
+    #              self._current.orientation.z,
+    #              self._current.orientation.w]
+    #         (roll, pitch, yaw) = euler_from_quaternion(q)
+    #         self._vel_pub.publish(rotate_message)
+    #
+    #     print desired_angle
+    #     print yaw
+    #     rotate_message.angular.z = 0.0
+    #     self._vel_pub.publish(rotate_message)
 
-# Function:
-# Input:
-# Output:
-def Poly5(self, startTime, endTime, startVelocity, endVelocity, startAcceleration, endAcceleration, startPosition, endPosition):
-    # Returns the coefficients for the quintic polynomial used for generating a smooth trajectory
-	# !FIXME I wish I had time to implement this
-	t0 = startTime; # [seconds]
-	tf = endTime; # [seconds]
-	v0 = startVelocity; # [degrees/second]
-	vf = endVelocity; # [degrees/second]
-	a0 = startAcceleration; # [degrees/second^2]
-	af = endAcceleration; # [degrees/second^2]
-	p0 = startPosition; #[degrees]
-	pf = endPosition; # [degrees]
+    # def driveStraighter(self, speed,distance):
+     #        """
+     #            This method should populate a
+     #             message type and publish it to nav_goal in order to move the robot
+     #        """
+     #        #self.spinWheels(speed, speed, distance/speed)
+     #        #start driving
+     #        print ("Begining to drive")
+     #        origin = copy.deepcopy(self._current) #use this
+     #
+     #        #creating a message of the type twist()
+     #        drive_message = Twist()
+     #
+     #        #initilizing linear and angular components
+     #        drive_message.linear.x = speed
+     #        drive_message.angular.z = 0
+     #
+     #        initialx = origin.position.x
+     #        initialy = origin.position.y
+     #        # to check if we reach destination
+     #        reached_destination = False
+     #        while(not reached_destination):
+     #
+     #            #get current x and y position of our robot
+     #            currentx = self._current.position.x
+     #            currenty = self._current.position.y
+     #            #Use distance formula to find the distance
+     #            current_distance = math.sqrt(((currentx - initialx)**2) +((currenty - initialy)**2 ))
+     #
+     #            if(current_distance >= distance):
+     #                reached_destination = True
+     #                drive_message.linear.x = 0
+     #                self._vel_pub.publish(drive_message)
+     #                print "reached_destination"
+     #                print "distance travelled",current_distance
+     #
+     #            #to ramp up speed when distance travelled is less than 80% of the journey
+     #            elif(current_distance < 0.8*distance):
+     #                drive_message.linear.x = 2 * speed
+     #                #print "my speed2",drive_message.linear.x
+     #
+     #            #to slow down when destination is close
+     #            elif(current_distance >= 0.8*distance):
+     #                drive_message.linear.x = 0.5 * speed
+     #
+     #            #to often reach faster to any goal
+     #            else:
+     #                drive_message.linear.x = 2 * speed
+     #            self._vel_pub.publish(drive_message)
 
-	matrix = np.array([
-		[1., t0, t0^2,  t0^3,    t0^4,     t0^5],
-		[0., 1., 2.*t0, 3.*t0^2, 4.*t0^3,  5.*t0^4],
-		[0., 0., 2.,    6.*t0,   12.*t0^2, 20.*t0^3],
-		[1., tf, tf^2,  tf^3,    tf^4,     tf^5],
-		[0., 1., 2.*tf, 3.*tf^2, 4.*tf^3,  5.*tf^4],
-		[0., 0., 2.,    6.*tf,   12.*tf^2, 20.*tf^3]
-		])
-	startEnd = np.array([
-		[p0],
-		[v0],
-		[a0],
-		[pf],
-		[vf],
-		[af]
-		])
 
-	#matrix = np.array([[1.,2.],[3.,4.]])
-	matrixInverse = np.linalg.inv(matrix)
-	#np.allclose(np.dot(matrix, matrixInverse), np.eye(2))
-	#np.allclose(np.dot(matrixInverse, matrix), np.eye(2))
-	result = np.matmul(matrixInv,startEnd) # Coefficients for the quintic polynomial
-	return result
+
+    # ------------------------------- Robot Helper Functions ---------------------------- #
+
+    # Function:
+    # Input:
+    # Output:
+    def _get_twist(self, linear, angular):
+    	# Construct Twist message for differential drive robot based on linear and angular velocity
+    	twist = Twist()
+    	twist.linear.x = linear
+    	twist.angular.z = angular
+    	return twist
+
+    # Function:
+    # Input:
+    # Output:
+    def timerCallback(self,evprent):
+    	# Wait for and get the transform between two frames
+    	self._odom_list.waitForTransform('/odom', '/base_footprint', rospy.Time(0), rospy.Duration(1.0))
+    	(position, orientation) = self._odom_list.lookupTransform('/odom', '/base_footprint', rospy.Time(0))
+       	# Save the current position and orientation
+    	self._current.position.x = position[0]
+    	self._current.position.y = position[1]
+    	self._current.orientation.x = orientation[0]
+    	self._current.orientation.y = orientation[1]
+    	self._current.orientation.z = orientation[2]
+    	self._current.orientation.w = orientation[3]
+    	# Create a quaternion
+       	q = [self._current.orientation.x,
+    		self._current.orientation.y,
+    		self._current.orientation.z,
+    		self._current.orientation.w]
+    	# convert the quaternion to roll pitch yaw
+    	(roll, pitch, yaw) = euler_from_quaternion(q)
+
+    # Function:
+    # Input:
+    # Output:
+    def planTraj(self, b, t):
+    	pass
+
+    	"""
+    	Bonus Question:  compute the coefs for a cubic polynomial (hint:  you did this in 3001)
+    	"""
+
+    # Function:
+    # Input:
+    # Output:
+    def Poly5(self, startTime, endTime, startVelocity, endVelocity, startAcceleration, endAcceleration, startPosition, endPosition):
+        # Returns the coefficients for the quintic polynomial used for generating a smooth trajectory
+    	# !FIXME I wish I had time to implement this
+    	t0 = startTime; # [seconds]
+    	tf = endTime; # [seconds]
+    	v0 = startVelocity; # [degrees/second]
+    	vf = endVelocity; # [degrees/second]
+    	a0 = startAcceleration; # [degrees/second^2]
+    	af = endAcceleration; # [degrees/second^2]
+    	p0 = startPosition; #[degrees]
+    	pf = endPosition; # [degrees]
+
+    	matrix = np.array([
+    		[1., t0, t0^2,  t0^3,    t0^4,     t0^5],
+    		[0., 1., 2.*t0, 3.*t0^2, 4.*t0^3,  5.*t0^4],
+    		[0., 0., 2.,    6.*t0,   12.*t0^2, 20.*t0^3],
+    		[1., tf, tf^2,  tf^3,    tf^4,     tf^5],
+    		[0., 1., 2.*tf, 3.*tf^2, 4.*tf^3,  5.*tf^4],
+    		[0., 0., 2.,    6.*tf,   12.*tf^2, 20.*tf^3]
+    		])
+    	startEnd = np.array([
+    		[p0],
+    		[v0],
+    		[a0],
+    		[pf],
+    		[vf],
+    		[af]
+    		])
+
+    	#matrix = np.array([[1.,2.],[3.,4.]])
+    	matrixInverse = np.linalg.inv(matrix)
+    	#np.allclose(np.dot(matrix, matrixInverse), np.eye(2))
+    	#np.allclose(np.dot(matrixInverse, matrix), np.eye(2))
+    	result = np.matmul(matrixInv,startEnd) # Coefficients for the quintic polynomial
+    	return result
 
 
 
@@ -1103,8 +1103,8 @@ def run():
     gridPathPub = rospy.Publisher("/realPath", GridCells, queue_size=1) # Gridcell path from start to end
     wayPathPub = rospy.Publisher("/wayPath", Path, queue_size=1) # Path path of waypoints from start to end
     wayGridPub = rospy.Publisher("/waypoints", GridCells, queue_size=1)
-    goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
-    #goal_sub = rospy.Subscriber('goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
+    #goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
+    goto_sub = rospy.Subscriber('/goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
 
     # Wait a second for publisher, subscribers, and TF
