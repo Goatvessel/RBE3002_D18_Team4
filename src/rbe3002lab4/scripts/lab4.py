@@ -764,7 +764,7 @@ class Robot:
         self.ExtremeRotate(yawGoal)
 
         #Drive towards goal
-        self.driveStraighter(2,straightline)
+        self.driveStraighter(0.06,straightline)
 
 
 
@@ -904,7 +904,7 @@ class Robot:
         print ("Starting to rotate")
 
         #convert incoming degrees angle to radians
-        radian_angle = rotation #0*math.pi/180
+        radian_angle = rotation #*math.pi/180
         #print "angle :", angle
 
         q = [self._current.orientation.x,
@@ -915,21 +915,21 @@ class Robot:
         (roll, pitch, yaw) = euler_from_quaternion(q)
 
         #calculate desired angle
-        desired_angle = radian_angle + startYaw1
+        desired_angle = radian_angle #+ startYaw1
 
         if (desired_angle > math.pi):
-            desired_angle += -2 #*math.pi
+            desired_angle += -2*math.pi
         elif (desired_angle < -math.pi):
-            desired_angle += 2 #*math.pi
+            desired_angle += 2*math.pi
 
         #create a new message of the type twist()
         rotate_message = Twist()
 
         #fix direction turning
         rotate_message.linear.x = 0.0
-        if (radian_angle > 0):
+        if (radian_angle - startYaw1 > 0):
             rotate_message.angular.z = 0.4
-        elif (radian_angle < 0):
+        elif (radian_angle - startYaw1 < 0):
             rotate_message.angular.z = -0.4
 
         #testing
@@ -970,6 +970,10 @@ class Robot:
         reached_destination = False
         while(not reached_destination):
 
+            accelerateRatio = 0.7
+            speedingUp = 0.6
+            slowingDown = 0.6
+
             #get current x and y position of our robot
             currentx = self._current.position.x
             currenty = self._current.position.y
@@ -984,13 +988,13 @@ class Robot:
                 print "distance travelled",current_distance
 
             #to ramp up speed when distance travelled is less than 80% of the journey
-            elif(current_distance < 0.8*distance):
-                drive_message.linear.x = 2 * speed
+            elif(current_distance < accelerateRatio*distance):
+                drive_message.linear.x = speedingUp * speed
                 #print "my speed2",drive_message.linear.x
 
             #to slow down when destination is close
-            elif(current_distance >= 0.8*distance):
-                drive_message.linear.x = 0.5 * speed
+            elif(current_distance >= accelerateRatio*distance):
+                drive_message.linear.x = slowingDown * speed
 
             #to often reach faster to any goal
             else:
@@ -1181,13 +1185,13 @@ def run():
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
 
     # Wait a second for publisher, subscribers, and TF
-    rospy.sleep(1)
+    rospy.sleep(.1)
     print("Pubs and Subs Initialized")
     print("- - Begin Operation - -")
     turtle = Robot()
     while (not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
-        rospy.sleep(.5)
+        rospy.sleep(.1)
     print("")
     print("- - End Operation - -")
 
