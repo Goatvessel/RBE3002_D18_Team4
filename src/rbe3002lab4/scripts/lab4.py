@@ -1162,7 +1162,7 @@ def run():
 
     startCell = None
     goalCell = None
-    radius = 2
+    radius = 3
     print("")
     print(" RBE 3002 D18 Lab 4")
     print("")
@@ -1180,7 +1180,7 @@ def run():
     gridPathPub = rospy.Publisher("/realPath", GridCells, queue_size=1) # Gridcell path from start to end
     wayPathPub = rospy.Publisher("/wayPath", Path, queue_size=1) # Path path of waypoints from start to end
     wayGridPub = rospy.Publisher("/waypoints", GridCells, queue_size=1)
-    #goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
+    goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goto_sub = rospy.Subscriber('/goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
 
