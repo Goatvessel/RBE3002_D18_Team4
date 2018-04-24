@@ -1232,6 +1232,8 @@ def run():
     goto_sub = rospy.Subscriber('/goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
 
+    front_sub = rospy.Subscriber('/move_base/local_costmap/footprint', PolygonStamped, func, queue_size=1 )#FIXME! function to receive frontiers
+
     # Wait a second for publisher, subscribers, and TF
     rospy.sleep(.1)
     print("Pubs and Subs Initialized")
