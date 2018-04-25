@@ -20,19 +20,42 @@ from Queue import PriorityQueue
 
 # ------------------------------ WIP Functions ------------------------------ #
 
+# Function: main exploratioin function loads map and goes to new goal indice to explore the whole map and stops once the map is explored
+# Input:
+# Output:
+def theExplorer(self):
+
+
+#Fuction: Take in map list of indices and return frontier lisits
+def mapToFrontiers(map):
+
+    frontier[i] = #list of frontiers
+
+
+#Function: Takes in list of frontier indices and calculates mid node
+def findMiddle():
+
+
+
+#Function takes in list of lists of indices and returns the longest list
+def longerList(list):
+    longest = []
+    if len(list) > 1:
+        i = 1
+        for i in list:
+            if len(list[i-1]) > len(list[i]):
+                longest = list[i-1]
+            else:
+                longest = list[i]
+
+    else:
+        print("List too small")
 
 
 
 
-
-
-
-
-
-
-
-
-
+#function takes new node indice and navigates to that node and reruns exploration
+#navToPose
 
 
 
@@ -1218,7 +1241,6 @@ def run():
 
     # Set Pubs and Subs
     rospy.init_node('lab3')
-    mapSub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     mapPub = rospy.Publisher("/map_check", GridCells, queue_size=1)
     startPub = rospy.Publisher("/start_cell", GridCells, queue_size=1)
     goalPub = rospy.Publisher("/goal_cell", GridCells, queue_size=1)
@@ -1228,11 +1250,14 @@ def run():
     gridPathPub = rospy.Publisher("/realPath", GridCells, queue_size=1) # Gridcell path from start to end
     wayPathPub = rospy.Publisher("/wayPath", Path, queue_size=1) # Path path of waypoints from start to end
     wayGridPub = rospy.Publisher("/waypoints", GridCells, queue_size=1)
+
     goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goto_sub = rospy.Subscriber('/goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
+    mapSub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+    costmapSub = rospy.Subscriber("/move_base/global_costmap/footprint")
 
-    front_sub = rospy.Subscriber('/move_base/local_costmap/footprint', PolygonStamped, func, queue_size=1 )#FIXME! function to receive frontiers
+    front_sub = rospy.Subscriber('/move_base/local_costmap/footprint', PolygonStamped, theExplorer, queue_size=1 )#FIXME! function to receive frontiers
 
     # Wait a second for publisher, subscribers, and TF
     rospy.sleep(.1)
