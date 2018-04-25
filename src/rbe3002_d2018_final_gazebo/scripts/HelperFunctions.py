@@ -23,39 +23,84 @@ from Queue import PriorityQueue
 # Function: main exploratioin function loads map and goes to new goal indice to explore the whole map and stops once the map is explored
 # Input:
 # Output:
+#FIXME no idea if it will work, but I use the functions in the way I expect them to work
 def theExplorer(self):
+    # runs through all the frontiers
+    for i in frontiers
+        # Make of frontiers using the global map
+        forntiers = mapToFrontiers(globalMap)
+
+        # Find the longest frontier group
+        currentFrontier = longerList(frontiers)
+
+        # Fing its middle
+        currentMiddle = findMiddle(currentFrontier)
+
+        # Go to it
+        navToPose(self, currentMiddle)
+
+        # Repeat
+
+    #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
 
 
-#Fuction: Take in map list of indices and return frontier lisits
+#Fuction: Take in map list of indices and return frontier lists
 def mapToFrontiers(map):
 
-    frontier[i] = #list of frontiers
+    frontierGroups = []
+
+    for i in len(map):
+        for j in len(map[0]):
+            tempIndices = []
+            if map(i, j) != -1 and i != 100: #if not obstacle(100) or unkown(-1), check its neighbors
+                tempIndices = getNearbyIndices(i)
+
+
+            for f in tempIndices
+                #if one of the neighbors is unkown
+                if f == -1:
+                    # Check if a frontier that is close to the current one has already made a list
+                    #FIXME do we need to check afterwards for indices that potentially belong to the same frontier, but were placed in separate ones?
+                    for m in len(frontierGroups):
+                        for n in len(frontierGroups[0]):
+                            if f == n:
+                                frontierGroups[m].append(j)
+                            else:
+                                frontierGroups.append(j)
+
+    return frontierGroups
 
 
 #Function: Takes in list of frontier indices and calculates mid node
-def findMiddle():
+def findMiddle(frontList):
 
+    #FIXME assuming list is in order, should we sort it?
+
+    return frontList[int(len(frontList)/2)]
 
 
 #Function takes in list of lists of indices and returns the longest list
-def longerList(list):
-    longest = []
-    if len(list) > 1:
-        i = 1
-        for i in list:
-            if len(list[i-1]) > len(list[i]):
-                longest = list[i-1]
-            else:
-                longest = list[i]
+def longerList(frontierGroupList):
 
+    # checks if the list is at least 4 cells long (minimum size for robot to fit),
+    #                                   sets i to 1 to skip first element for i-1
+    if len(frontierGroupList) > 4:
+        longest = frontierGroupList[0]
+        i = 1
+        for i in frontierGroupList:
+            # Check which of the two lists is longer
+            if len(longest < len(frontierGroupList[i]):
+                longest = len(frontierGroupList[i]
     else:
         print("List too small")
+
+    return longest
 
 
 
 
 #function takes new node indice and navigates to that node and reruns exploration
-#navToPose
+#       navToPose??
 
 
 
