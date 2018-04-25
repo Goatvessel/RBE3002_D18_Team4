@@ -24,27 +24,29 @@ from Queue import PriorityQueue
 # Input:
 # Output:
 #Might have to be in robot class
-def theExplorer(self):
-    # runs through all the frontiers
-    frontiers = []
-    for i in frontiers:
-        # Make of frontiers using the global map
-        #forntiers = mapToFrontiers(globalMap)
-        forntiers = mapToFrontiers(mapData)
-
-        # Find the longest frontier group
-        currentFrontier = longerList(frontiers)
-
-        # Fing its middle
-        currentMiddle = findMiddle(currentFrontier)
-
-        # Go to it
-        navToPose(self, currentMiddle)
-
-        # Repeat
-
-    #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
-
+# def theExplorer(self):
+#     # runs through all the frontiers
+#     frontiers = []
+#     for i in frontiers:
+#         # Make of frontiers using the global map
+#         #forntiers = mapToFrontiers(globalMap)
+#         forntiers = mapToFrontiers(mapData)
+#
+#         # Find the longest frontier group
+#         currentFrontier = longerList(frontiers)
+#
+#         # Fing its middle
+#         currentMiddle = findMiddle(currentFrontier)
+#
+#         # Go to it
+#         navToPose(self, currentMiddle)
+#
+#         # Repeat
+#
+#
+#
+#     #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
+#
 
 #Fuction: Take in map list of indices and return frontier lists
 def mapToFrontiers(map):
@@ -855,8 +857,6 @@ class Robot:
         # # Rotate to face the Goal position
         # ExtremeRotate(initialYaw)
 
-
-
     # Function:
     # Input:
     # Output:
@@ -868,6 +868,31 @@ class Robot:
         rotate(-90,True,_DEBUG_)
         driveStraight(.1,.45,_DEBUG_)
         rotate(135,True,_DEBUG_)
+
+    def theExplorer(self):
+        # runs through all the frontiers
+        frontiers = []
+        for i in frontiers:
+            # Make of frontiers using the global map
+            #forntiers = mapToFrontiers(globalMap)
+            forntiers = mapToFrontiers(mapData)
+
+            # Find the longest frontier group
+            currentFrontier = longerList(frontiers)
+
+            # Fing its middle
+            currentMiddle = findMiddle(currentFrontier)
+
+            # Go to it
+            navToPose(self, currentMiddle)
+
+            # Repeat
+
+
+
+        #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
+
+
 
     # ---------------------------- Robot Movement Functions ------------------------ #
 
@@ -976,6 +1001,7 @@ class Robot:
             if _DEBUG_:
                 print ("Current Angle: ",currentYaw," Distance To Go: ",abs(goalYaw-currentYaw))
 
+
     def ExtremeRotate(self, rotation):
 
         print ("Starting to rotate")
@@ -1026,6 +1052,7 @@ class Robot:
         # print yaw
         rotate_message.angular.z = 0.0
         self._vel_pub.publish(rotate_message)
+
 
     def driveStraighter(self, speed,distance):
 
@@ -1078,6 +1105,7 @@ class Robot:
                 drive_message.linear.x = 2 * speed
             self._vel_pub.publish(drive_message)
 
+
     def spinThemWheels(self, v_left, v_right, time):
 
         #get ros time
@@ -1114,9 +1142,6 @@ class Robot:
             self._vel_pub.publish(spinwheel_message)
         #To stop spinning after desired time has elasped
         self._vel_pub.publish(stopwheel_message)
-
-
-
 
     # ------------------------------- Robot Helper Functions ---------------------------- #
 
