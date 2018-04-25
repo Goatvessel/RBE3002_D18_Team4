@@ -19,7 +19,7 @@ import rospy, tf, numpy, math
 from Queue import PriorityQueue
 
 # ------------------------------ WIP Functions ------------------------------ #
-#hi
+
 # Function: main exploratioin function loads map and goes to new goal indice to explore the whole map and stops once the map is explored
 # Input:
 # Output:
