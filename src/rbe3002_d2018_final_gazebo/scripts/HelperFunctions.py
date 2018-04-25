@@ -24,29 +24,29 @@ from Queue import PriorityQueue
 # Input:
 # Output:
 #Might have to be in robot class
-# def theExplorer(self):
-#     # runs through all the frontiers
-#     frontiers = []
-#     for i in frontiers:
-#         # Make of frontiers using the global map
-#         #forntiers = mapToFrontiers(globalMap)
-#         forntiers = mapToFrontiers(mapData)
-#
-#         # Find the longest frontier group
-#         currentFrontier = longerList(frontiers)
-#
-#         # Fing its middle
-#         currentMiddle = findMiddle(currentFrontier)
-#
-#         # Go to it
-#         navToPose(self, currentMiddle)
-#
-#         # Repeat
-#
-#
-#
-#     #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
-#
+def theExplorer(self):
+    # runs through all the frontiers
+    frontiers = []
+    for i in frontiers:
+        # Make of frontiers using the global map
+        #forntiers = mapToFrontiers(globalMap)
+        forntiers = mapToFrontiers(mapData)
+
+        # Find the longest frontier group
+        currentFrontier = longerList(frontiers)
+
+        # Fing its middle
+        currentMiddle = findMiddle(currentFrontier)
+
+        # Go to it
+        navToPose(self, currentMiddle)
+
+        # Repeat
+
+
+
+    #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
+
 
 #Fuction: Take in map list of indices and return frontier lists
 def mapToFrontiers(map):
@@ -869,25 +869,25 @@ class Robot:
         driveStraight(.1,.45,_DEBUG_)
         rotate(135,True,_DEBUG_)
 
-    def theExplorer(self):
-        # runs through all the frontiers
-        frontiers = []
-        for i in frontiers:
-            # Make of frontiers using the global map
-            #forntiers = mapToFrontiers(globalMap)
-            forntiers = mapToFrontiers(mapData)
-
-            # Find the longest frontier group
-            currentFrontier = longerList(frontiers)
-
-            # Fing its middle
-            currentMiddle = findMiddle(currentFrontier)
-
-            # Go to it
-            navToPose(self, currentMiddle)
-
-            # Repeat
-
+    # def theExplorer(self):
+    #     # runs through all the frontiers
+    #     frontiers = []
+    #     for i in frontiers:
+    #         # Make of frontiers using the global map
+    #         #forntiers = mapToFrontiers(globalMap)
+    #         forntiers = mapToFrontiers(mapData)
+    #
+    #         # Find the longest frontier group
+    #         currentFrontier = longerList(frontiers)
+    #
+    #         # Fing its middle
+    #         currentMiddle = findMiddle(currentFrontier)
+    #
+    #         # Go to it
+    #         navToPose(self, currentMiddle)
+    #
+    #         # Repeat
+    #
 
 
         #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
@@ -1317,6 +1317,8 @@ def run():
     #costmapSub = rospy.Subscriber("/move_base/local_costmap/footprint")
 
     front_sub = rospy.Subscriber('/move_base/local_costmap/footprint', PolygonStamped, theExplorer, queue_size=1 )#FIXME! function to receive frontiers
+    #front_sub = rospy.Subscriber('/map', PolygonStamped, theExplorer, queue_size=1 )#FIXME! function to receive frontiers
+
 
     # Wait a second for publisher, subscribers, and TF
     rospy.sleep(.1)
