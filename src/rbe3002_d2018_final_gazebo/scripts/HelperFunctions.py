@@ -3,6 +3,7 @@
 # ---------------------------------- Imports -------------------------------- #
 
 import rospy
+from actionlib_msgs.msg import GoalStatusArray
 from nav_msgs.msg import GridCells
 from std_msgs.msg import String
 from nav_msgs.msg import Path
@@ -34,33 +35,33 @@ def exploreStatus(status):
 # Output:
 #Might have to be in robot class
 def theExplorer(data):
-
-    # runs through all the frontiers
-    frontiers = []
-    for i in frontiers:
-        # Make of frontiers using the global map
-        #forntiers = mapToFrontiers(globalMap)
-        frontiers = mapToFrontiers(data)
-
+    print ("data",data)
+    print("begining to Explore")
+    # runs through all the frontierLists
+    frontierLists = []
+    print ("frontierLists",frontierLists)
+    for i in frontierLists:
+            # Make of frontierLists using the global map
+            #forntiers = GenFrontierLists(globalMap)
+        frontierLists = GenFrontierLists(data)
+        print (frontierLists)
         # Find the longest frontier group
-        currentFrontier = longerList(frontiers)
+        currentFrontier = longestFrontierList(frontierLists)
 
-        # Fing its middle
+        # Find its middle  ......................................needs work
         currentMiddle = findMiddle(currentFrontier)
         print(currentMiddle)
 
-        # Go to it
+        # navigate.........might use astar also but blehh or gen trajectory
         navToPose(self, currentMiddle)
 
-        # Repeat
 
-
-    #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
+#FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
 
 
 #Fuction: Take in map list of indices and return frontier lists
-def mapToFrontiers(map):
-
+def GenFrontierLists(data):
+    print("generating frontier lists")
     frontierGroups = []
 
     for i in len(map):
@@ -94,7 +95,7 @@ def findMiddle(frontList):
 
 
 #Function takes in list of lists of indices and returns the longest list
-def longerList(frontierGroupList):
+def longestFrontierList(frontierGroupList):
 
     # checks if the list is at least 4 cells long (minimum size for robot to fit),
     #                                   sets i to 1 to skip first element for i-1
@@ -867,40 +868,9 @@ class Robot:
         # # Rotate to face the Goal position
         # ExtremeRotate(initialYaw)
 
-    # Function:
-    # Input:
-    # Output:
-    def executeTrajectory(self,_DEBUG_=False):
-		# A set trajectory to follow
-		# Drive 0.6 meters, Rotate 90 degrees right, drive 0.45 meters, rotate 135 degrees left
-
-        driveStraight(.05,.6,_DEBUG_)
-        rotate(-90,True,_DEBUG_)
-        driveStraight(.1,.45,_DEBUG_)
-        rotate(135,True,_DEBUG_)
-
-    # def theExplorer(self):
-    #     # runs through all the frontiers
-    #     frontiers = []
-    #     for i in frontiers:
-    #         # Make of frontiers using the global map
-    #         #forntiers = mapToFrontiers(globalMap)
-    #         forntiers = mapToFrontiers(mapData)
-    #
-    #         # Find the longest frontier group
-    #         currentFrontier = longerList(frontiers)
-    #
-    #         # Fing its middle
-    #         currentMiddle = findMiddle(currentFrontier)
-    #
-    #         # Go to it
-    #         navToPose(self, currentMiddle)
-    #
-    #         # Repeat
-    #
 
 
-        #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
+
 
 
 
@@ -1334,7 +1304,7 @@ def run():
 
     #exploreCallbackSub = rospy.Subscriber('move_base/status',actionlib_msgs/GoalStatusArray,exploreStatus)
     #exploreCallbackSub = rospy.Subscriber('move_base/status',GoalStatusArray,exploreStatus)
-    exploreCallbackSub = rospy.Subscriber('move_base/status',actionlib_msgs,exploreStatus)
+    exploreCallbackSub = rospy.Subscriber('move_base/status',GoalStatusArray,exploreStatus)
 
 
     # Wait a second for publisher, subscribers, and TF
