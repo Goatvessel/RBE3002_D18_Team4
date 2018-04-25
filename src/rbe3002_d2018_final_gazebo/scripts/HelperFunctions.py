@@ -20,7 +20,7 @@ from Queue import PriorityQueue
 
 # ------------------------------ WIP Functions ------------------------------ #
 # Function : Updates status of the explore
-def exploreStatus(status)
+def exploreStatus(status):
     global explore
 
     if (status != 1):
@@ -34,7 +34,7 @@ def exploreStatus(status)
 # Output:
 #Might have to be in robot class
 def theExplorer(data):
-    global mapData
+
     # runs through all the frontiers
     frontiers = []
     for i in frontiers:
@@ -1259,7 +1259,7 @@ def defGlobals():
     global wayGridPub
     global wayPathPub
     global turtle
-    global explore = True
+    global explore
 
     # Set Important Indices as Global Variables
     global startCell
@@ -1274,6 +1274,7 @@ def defGlobals():
     startCell = None
     goalCell = None
     radius = 3
+    explore = True
 
 # Main handler of the project
 def run():
@@ -1331,7 +1332,9 @@ def run():
     #front_sub = rospy.Subscriber('/map', OccupancyGrid, theExplorer, queue_size=1 )
 
 
-    exploreCallbackSub = rospy.Subscriber('move_base/status',actionlib_msgs/GoalStatusArray,exploreStatus)
+    #exploreCallbackSub = rospy.Subscriber('move_base/status',actionlib_msgs/GoalStatusArray,exploreStatus)
+    #exploreCallbackSub = rospy.Subscriber('move_base/status',GoalStatusArray,exploreStatus)
+    exploreCallbackSub = rospy.Subscriber('move_base/status',actionlib_msgs,exploreStatus)
 
 
     # Wait a second for publisher, subscribers, and TF
