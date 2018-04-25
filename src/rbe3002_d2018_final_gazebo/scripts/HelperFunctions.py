@@ -6,7 +6,7 @@ import rospy
 from nav_msgs.msg import GridCells
 from std_msgs.msg import String
 from nav_msgs.msg import Path
-from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianceStamped
+from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianceStamped, PolygonStamped
 from nav_msgs.msg import Odometry, OccupancyGrid
 from kobuki_msgs.msg import BumperEvent
 from tf.transformations import euler_from_quaternion
@@ -23,12 +23,14 @@ from Queue import PriorityQueue
 # Function: main exploratioin function loads map and goes to new goal indice to explore the whole map and stops once the map is explored
 # Input:
 # Output:
-#FIXME no idea if it will work, but I use the functions in the way I expect them to work
+#Might have to be in robot class
 def theExplorer(self):
     # runs through all the frontiers
-    for i in frontiers
+    frontiers = []
+    for i in frontiers:
         # Make of frontiers using the global map
-        forntiers = mapToFrontiers(globalMap)
+        #forntiers = mapToFrontiers(globalMap)
+        forntiers = mapToFrontiers(mapData)
 
         # Find the longest frontier group
         currentFrontier = longerList(frontiers)
@@ -56,7 +58,7 @@ def mapToFrontiers(map):
                 tempIndices = getNearbyIndices(i)
 
 
-            for f in tempIndices
+            for f in tempIndices:
                 #if one of the neighbors is unkown
                 if f == -1:
                     # Check if a frontier that is close to the current one has already made a list
@@ -89,10 +91,10 @@ def longerList(frontierGroupList):
         i = 1
         for i in frontierGroupList:
             # Check which of the two lists is longer
-            if len(longest < len(frontierGroupList[i]):
-                longest = len(frontierGroupList[i]
-    else:
-        print("List too small")
+            if len(longest < len(frontierGroupList[i])):
+                longest = len(frontierGroupList[i])
+            else:
+                print("List too small")
 
     return longest
 
@@ -101,13 +103,6 @@ def longerList(frontierGroupList):
 
 #function takes new node indice and navigates to that node and reruns exploration
 #       navToPose??
-
-
-
-
-
-
-
 # Function: Build a list of resized Nodes with which to pathfind with or
 #           build a visualization of the environment
 # Input: gridData
@@ -158,10 +153,6 @@ def longerList(frontierGroupList):
 #     #         startOffset = 2
 #     #         index += 1 #?
 #     #     index += 3
-
-
-
-
 #
 # def primesLessThan(number):
 #     primes = []
@@ -194,8 +185,6 @@ def longerList(frontierGroupList):
 #             cur = cur/val
 #             factors.append(val)
 #     return factors
-
-
 # ------------------------------ Map Functions ------------------------------ #
 
 # Function: Map Callback
@@ -1300,7 +1289,7 @@ def run():
     goto_sub = rospy.Subscriber('/goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
     mapSub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
-    costmapSub = rospy.Subscriber("/move_base/global_costmap/footprint")
+    #costmapSub = rospy.Subscriber("/move_base/local_costmap/footprint")
 
     front_sub = rospy.Subscriber('/move_base/local_costmap/footprint', PolygonStamped, theExplorer, queue_size=1 )#FIXME! function to receive frontiers
 
