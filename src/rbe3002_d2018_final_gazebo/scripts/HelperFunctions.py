@@ -19,30 +19,40 @@ import rospy, tf, numpy, math
 from Queue import PriorityQueue
 
 # ------------------------------ WIP Functions ------------------------------ #
+# Function : Updates status of the explore
+def exploreStatus(status)
+    global explore
+
+    if (status != 1):
+        explore = True
+    elif (status == 1):
+        explore = False
+
 
 # Function: main exploratioin function loads map and goes to new goal indice to explore the whole map and stops once the map is explored
 # Input:
 # Output:
 #Might have to be in robot class
-def theExplorer(self):
+def theExplorer(data):
+    global mapData
     # runs through all the frontiers
     frontiers = []
     for i in frontiers:
         # Make of frontiers using the global map
         #forntiers = mapToFrontiers(globalMap)
-        forntiers = mapToFrontiers(mapData)
+        frontiers = mapToFrontiers(data)
 
         # Find the longest frontier group
         currentFrontier = longerList(frontiers)
 
         # Fing its middle
         currentMiddle = findMiddle(currentFrontier)
+        print(currentMiddle)
 
         # Go to it
         navToPose(self, currentMiddle)
 
         # Repeat
-
 
 
     #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
@@ -209,7 +219,7 @@ def mapCallBack(data):
     offsetX = data.info.origin.position.x
     offsetY = data.info.origin.position.y
     #resizeCells(mapData)
-
+    theExplorer(mapData)
     print("Map Loaded")
     #getResizedNodes(mapData)
     #getGridUpdate(mapData)
@@ -1183,6 +1193,7 @@ class Robot:
         startCell = getIndex(position[0],position[1])
         #print startCell
 
+
     # Function:
     # Input:
     # Output:
@@ -1248,7 +1259,7 @@ def defGlobals():
     global wayGridPub
     global wayPathPub
     global turtle
-
+    global explore = True
 
     # Set Important Indices as Global Variables
     global startCell
@@ -1316,8 +1327,11 @@ def run():
     mapSub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     #costmapSub = rospy.Subscriber("/move_base/local_costmap/footprint")
 
-    front_sub = rospy.Subscriber('/move_base/local_costmap/footprint', PolygonStamped, theExplorer, queue_size=1 )#FIXME! function to receive frontiers
-    #front_sub = rospy.Subscriber('/map', PolygonStamped, theExplorer, queue_size=1 )#FIXME! function to receive frontiers
+    #front_sub = rospy.Subscriber('/move_base/local_costmap/footprint', PolygonStamped, theExplorer, queue_size=1 )
+    #front_sub = rospy.Subscriber('/map', OccupancyGrid, theExplorer, queue_size=1 )
+
+
+    exploreCallbackSub = rospy.Subscriber('move_base/status',actionlib_msgs/GoalStatusArray,exploreStatus)
 
 
     # Wait a second for publisher, subscribers, and TF
@@ -1331,6 +1345,13 @@ def run():
     print("")
     print("- - End Operation - -")
 
+    # Check to explore every 10 Hz
+    r = rospy.rate(10)
+    while not rospy.is_shutdown():
+        if (explore):
+            #Call the explorer function
+            theExplorer(mapData)
+        r.sleep()
 # Standalone operation
 if __name__ == '__main__':
     try:
