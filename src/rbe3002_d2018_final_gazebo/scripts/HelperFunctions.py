@@ -436,9 +436,6 @@ def publishCells01(grid):
 #     return newRes
 
 
-
-
-
 def getGridUpdate(grid):
     global gridIndices
 
@@ -943,10 +940,6 @@ class Robot:
         # ExtremeRotate(initialYaw)
 
     #navToPose(self, currentMiddle)
-
-
-
-
 
     # ---------------------------- Robot Movement Functions ------------------------ #
 
