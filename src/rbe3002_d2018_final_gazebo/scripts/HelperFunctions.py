@@ -4,7 +4,7 @@
 
 import rospy
 from actionlib_msgs.msg import GoalStatusArray
-from nav_msgs.msg import GridCells
+from nav_msgs.msg import GridCells, Odometry
 from std_msgs.msg import String
 from nav_msgs.msg import Path
 from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianceStamped, PolygonStamped
@@ -55,6 +55,9 @@ def theExplorer(data):
     # Find its middle  ......................................needs work
     currentMiddle = findMiddle(currentFrontier)
     print("Goal: ",currentMiddle)
+    theGoalCell = generateGridCells([currentMiddle])
+    goalPub.publish(theGoalCell)
+    print("Goal Published: ",theGoalCell,20 )
 
     # goalPose = PoseStamped()
     # x,y = getXY(currentMiddle)
@@ -131,15 +134,12 @@ def SortFrontierList(frontierList):
         #remainingList.remove(index)
 
     return frontierGroups
-
 #Function: Takes in list of frontier indices and calculates mid node
 def findMiddle(frontList):
     midIndex = len(frontList)//2
     middle = frontList[midIndex]
     #print("middle vb mvb",middle)
     return middle
-
-
 #Function takes in list of lists of indices and returns the longest list
 def longestFrontierList(frontierGroupList):
     longest = []
@@ -151,94 +151,6 @@ def longestFrontierList(frontierGroupList):
         longest = []
     return longest
 
-
-
-
-#function takes new node indice and navigates to that node and reruns exploration
-#       navToPose??
-# Function: Build a list of resized Nodes with which to pathfind with or
-#           build a visualization of the environment
-# Input: gridData
-# Output: List of Nodes
-# def getResizedNodes(mapData):
-# # Return large gridcell data to approximate the environment with
-# # Use this to pathfind between Nodes through their centers and their edges
-#     global width
-#     global height
-#     global resolution
-#     global offsetX
-#     global offsetY
-#     global primes
-#
-#     verticalBreaks = getListOfFactors(width)
-#     horizontalBreaks = getListOfFactors(height)
-#
-#
-#     # List of indices size 1x1
-#     # List of indices size 2x2
-#     # List of indices size 3x3
-#     # List of indices size 4x4
-#     # List of indices size 5x5
-#     # List of indices size 6x6
-#     # generateGridCells(listOfIndices, layer, width, height)
-#
-#     # updatePrimes(number)
-#
-#     # index = 0
-#     # i = 0
-#     # listOfGroups = []
-#     # listOfNodes = []
-#     # indicesToCheck = []
-#     # minWidth = 0
-#     # maxWidth = minWidth+width
-#     # minHeight = 0
-#     # maxHeight = minHeight +height
-#     # boxWidth = width
-#     # boxHeight = height
-#     # currentHeight = 0
-#     # currentWidth = 0
-#     # while (index < width*height):
-#     #     if (currentHeight%2 != 0):
-#     #         pass
-#     #     elif (currentHeight%4 == 0):
-#     #         start = 0
-#     #     elif (currentHeight%2 == 0):
-#     #         startOffset = 2
-#     #         index += 1 #?
-#     #     index += 3
-#
-#            if data[f] == -1:
-# def primesLessThan(number):
-#     primes = []
-#     if number <= 3:
-#         return primes
-#     else:
-#         primes = [2]
-#         i = 3
-#     while i < number:
-#         primality = True
-#         for val in primes:
-#             if val > math.sqrt(i):
-#                 break
-#             if i%val == 0:
-#                 primality = False
-#                 break
-#         if primality == True:
-#             primes.append(i)
-#         i += 2
-#     return primes
-#
-# def getListOfFactors(number):
-#     factors = []
-#     cur = number
-#     checkVals = primesLessThan(number)
-#     for val in checkVals:
-#         if cur == 1:
-#             break
-#         while( cur%val == 0 ):
-#             cur = cur/val
-#             factors.append(val)
-#     return factors
 # ------------------------------ Map Functions ------------------------------ #
 
 # Function: Map Callback
@@ -595,6 +507,7 @@ def readGoal(goalPose):
     global goalX
     global goalY
     global goalYaw
+    print("In readGoal")
     goalIndex = []
     #(goalX, goalY, goalYaw) = convertPose(goalPose)
     (goalX, goalY) = convertPose(goalPose)
@@ -871,6 +784,9 @@ class Robot:
         #yInitial = initialPose[1] # CUrrent Y
         yCurrent = startCellXY[1] # CUrrent Y
         yawCurrent = startYaw1 # Current Yaw.
+        print("current x : ",xCurrent)
+        print("current y : ",yCurrent)
+        print("current yaw : ",yawCurrent)
 
         # Goal Pose
         #self._odom_list.waitForTransform('odom', 'base_link', rospy.Time.now(), rospy.Duration(1.0))
@@ -882,11 +798,20 @@ class Robot:
         # yawGoal = GoalPose[2] # Desired yaw - angle about z axis
 
         #using world frame to navigate instead of the robot frame
-        goalxy = getXY(goal)
+        poseType = type(Pose)
+        indexType = type(5)
+        goalType = type(goal)
+        if goalType == indexType:
+            goalxy = getXY(goal)
+        else:
+            goalxy = convertPose(goal)
+
         xGoal = goalxy[0] # Desired X
         yGoal = goalxy[1] # Desired Y
         yawGoal = math.atan2(yGoal-yCurrent,xGoal-xCurrent)
-        print("goal yaw =",yawGoal)
+        print("Goal X: ", xGoal)
+        print("Goal Y: ", yGoal)
+        print("Goal Yaw: ", yawGoal)
 
 
         # Distance to the Goal from the Start
@@ -1204,9 +1129,14 @@ class Robot:
 
         global startYaw1
         startYaw1 = self.yaw
+        #print("Start Yaw 1: ",startYaw1)
         global startCell
         startCell = getIndex(position[0],position[1])
         #print startCell
+        #print("Current X: ", position[0])
+        #print("Current Y: ", position[1])
+        #print("Current Yaw: ", startYaw1)
+        #print("")
 
 
     # Function:
@@ -1305,6 +1235,7 @@ def run():
     global wayGridPub
     global wayPathPub
     global navstackPub
+    global odomSub
     global turtle
     turtle = Robot()
 
@@ -1328,7 +1259,7 @@ def run():
     print("Initializing Pubs and Subs")
 
     # Set Pubs and Subs
-    rospy.init_node('lab3')
+    rospy.init_node('lab5')
     mapPub = rospy.Publisher("/map_check", GridCells, queue_size=1)
     startPub = rospy.Publisher("/start_cell", GridCells, queue_size=1)
     goalPub = rospy.Publisher("/goal_cell", GridCells, queue_size=1)
@@ -1344,6 +1275,7 @@ def run():
     goto_sub = rospy.Subscriber('/goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
     mapSub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+    odomSub = rospy.Subscriber("/odom", Odometry, turtle.timerCallback)
     #costmapSub = rospy.Subscriber("/move_base/local_costmap/footprint")
 
     #front_sub = rospy.Subscriber('/move_base/local_costmap/footprint', PolygonStamped, theExplorer, queue_size=1 )
