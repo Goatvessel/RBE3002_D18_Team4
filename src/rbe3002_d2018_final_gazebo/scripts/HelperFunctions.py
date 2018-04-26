@@ -18,6 +18,8 @@ import copy
 import math
 import rospy, tf, numpy, math
 from Queue import PriorityQueue
+from random import randint
+
 
 # ------------------------------ WIP Functions ------------------------------ #
 # Function : Updates status of the explore
@@ -41,20 +43,53 @@ def exploreStatus(theStatus):
     LOST = 9   # An action client can determine that a goal is LOST. This should not be
         #    sent over the wire by an action server
 
-
-    realStatus = theStatus.status_list[0].status
-    print("THE status: ",realStatus)
+    if theStatus.status_list == []:
+        realStatus = 0
+    else:
+        realStatus = theStatus.status_list[0].status
+    print(" Exploration Status: ", realStatus)
 
     if (realStatus != 1):
         explore = True
     elif (realStatus == 1):
         explore = False
-    print("Explore? ",explore)
+    #print("Explore? ",explore)
 
-    #if realStatus == PENDING:
+    if realStatus == PENDING:
+        print(" -   Pending")
+    elif realStatus == ACTIVE:
+        print(" -   Active")
+    elif realStatus == PREEMPTED:
+        print(" -   Preempted")
+    elif realStatus == SUCCEEDED:
+        print(" -   Succeeded")
+    elif realStatus == ABORTED:
+        print(" -   Aborted")
+    elif realStatus == REJECTED:
+        print(" -   Rejected")
+    elif realStatus == PREEMPTING:
+        print(" -   Preemting")
+    elif realStatus == RECALLING:
+        print(" -   Recalling")
+    elif realStatus == RECALLED:
+        print(" -   Recalled")
+    elif realStatus == LOST:
+        print(" -   Lost")
+    else:
+        print("__Very very confused__")
+    print("")
 
 
+def checkNearWall(index):
+    global wallIndices
+    nearWall = False
 
+    nearby = getNearbyIndices(index)
+    for near in nearby:
+        if near in wallIndices:
+            nearWall = True
+            break
+    return nearWall
 
 # DORA
 # Function: main exploratioin function loads map and goes to new goal indice to explore the whole map and stops once the map is explored
@@ -64,7 +99,8 @@ def exploreStatus(theStatus):
 def theExplorer(data):
     global turtle
     #print ("data",data)
-    print("begining to Explore")
+    #print("begining to Explore")
+    print(" - - Exploring - - ")
     # runs through all the frontierLists
     frontierList = []
     #for i in frontierLists:
@@ -72,17 +108,23 @@ def theExplorer(data):
 
     #while len(frontierLists) == 0:
     frontierList = GenFrontierList(data)
+    print("Frontier List: ",len(frontierList))
     frontierGroups = SortFrontierList(frontierList)
     #print("Groups: ",frontierGroups)
     #print ("frontierLists",frontierList)
 
     # Find the longest frontier group
     currentFrontier = longestFrontierList(frontierGroups)
+    print("Found Frontier")
     #print("Current Frontier: ",currentFrontier)
     # Find its middle  ......................................needs work
     currentMiddle = findMiddle(currentFrontier)
-    print("Goal: ",currentMiddle)
+
+    #print("Goal: ",currentMiddle)
+    currentX = turtle._current.position.x
+    currentY = turtle._current.position.y
     print("Goal XY: ", getXY(currentMiddle))
+    print("Current XY: ",currentX," ",currentY)
     goalPub.publish(generateGridCells([currentMiddle],15))
 
     goalPose = PoseStamped()
@@ -110,23 +152,23 @@ def theExplorer(data):
 
 #Fuction: Take in map list of indices and return frontier lists
 def GenFrontierList(data):
-    print("generating frontier list")
+    print(" - Generating Frontier List - ")
     frontierList = []
     unexplored = -1
-    wall = 51
+    wall = 50
 
     for index in range(0,len(data)):
         isFrontier = False
         willAdd = False
 
         if (index > 77828):
-            print("FINISHED 14000 FRONTIERS!!!")
+            #print("FINISHED 14000 FRONTIERS!!!")
             #print("index ", i)
             break
 
 
         tempIndices = []
-        if data[index] != unexplored and data[index] >= wall: #if not obstacle(100) or unkown(-1), check its neighbors
+        if data[index] != unexplored and data[index] <= wall: #if not obstacle(100) or unkown(-1), check its neighbors
             tempIndices = getNearbyIndices(index)
         for neighbor in tempIndices:
             #if one of the neighbors is unkown
@@ -162,19 +204,34 @@ def SortFrontierList(frontierList):
     return frontierGroups
 #Function: Takes in list of frontier indices and calculates mid node
 def findMiddle(frontList):
-    midIndex = len(frontList)//2
-    middle = frontList[midIndex]
+    isNearWall = True
+    while(isNearWall):
+        #print("NEAR A WALL")
+        if len(frontList) == 0:
+            break
+        #midIndex = len(frontList)//2
+        checkHere = randint(0, len(frontList) - 1)
+        middle = frontList[checkHere]
+        isNearWall = checkNearWall(middle)
+        if isNearWall:
+            frontList.remove(middle)
+
     #print("middle vb mvb",middle)
     return middle
 #Function takes in list of lists of indices and returns the longest list
 def longestFrontierList(frontierGroupList):
     longest = []
     thresh = 5
+    print("     Frontier Groups: ")
     for group in frontierGroupList:
+        print("Length of group: ",len(group))
+        groupCells = generateGridCells(group,5)
+        frontierPub.publish(groupCells)
         if len(group) > len(longest):
             longest = group
     if len(longest) <= thresh:
         longest = []
+    print("")
     return longest
 
 # ------------------------------ Map Functions ------------------------------ #
@@ -200,7 +257,7 @@ def mapCallBack(data):
     offsetY = data.info.origin.position.y
     #resizeCells(mapData)
     theExplorer(mapData)
-    print("Map Loaded")
+    print(" / Map Loaded / ")
     #getResizedNodes(mapData)
     #getGridUpdate(mapData)
     #print data.info
@@ -776,10 +833,11 @@ class Robot:
     # Input:
     # Output:
     def __init__(self):
+        self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
         self._current = Pose() # Position and orientation of the robot
         self._odom_list = tf.TransformListener() # Subscribe to transform messages
         rospy.Timer(rospy.Duration(.1), self.timerCallback) # Setup callback - not hard real-time
-        self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
+
         #rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
         #rospy.Subscriber('goto', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
 
@@ -1015,6 +1073,7 @@ class Robot:
                  self._current.orientation.z,
                  self._current.orientation.w]
             (roll, pitch, yaw) = euler_from_quaternion(q)
+            rospy.sleep(.5)
             self._vel_pub.publish(rotate_message)
 
         # print desired_angle
@@ -1257,6 +1316,9 @@ def run():
     global odomSub
     global turtle
     turtle = Robot()
+    global explore
+
+    explore = True
 
 
     # Set Important Indices as Global Variables
@@ -1278,22 +1340,24 @@ def run():
     print("Initializing Pubs and Subs")
 
     # Set Pubs and Subs
-    rospy.init_node('lab5')
+
+    mapSub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+    frontierPub = rospy.Publisher("/frontier", GridCells, queue_size=1)
     mapPub = rospy.Publisher("/map_check", GridCells, queue_size=1)
     startPub = rospy.Publisher("/start_cell", GridCells, queue_size=1)
     goalPub = rospy.Publisher("/goal_cell", GridCells, queue_size=1)
-    frontierPub = rospy.Publisher("/frontier", GridCells, queue_size=1)
+
     openSetPub = rospy.Publisher("/openSet", GridCells, queue_size=1)
     currentIndexPub = rospy.Publisher("/currentIndex", GridCells, queue_size=1)
     gridPathPub = rospy.Publisher("/realPath", GridCells, queue_size=1) # Gridcell path from start to end
     wayPathPub = rospy.Publisher("/wayPath", Path, queue_size=1) # Path path of waypoints from start to end
     wayGridPub = rospy.Publisher("/waypoints", GridCells, queue_size=1)
-    navstackPub = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=1)
+    navstackPub = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=1)
 
-    goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
+    #goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goto_sub = rospy.Subscriber('/goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
-    goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
-    mapSub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+    #goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
+
     odomSub = rospy.Subscriber("/odom", Odometry, turtle.timerCallback)
     #costmapSub = rospy.Subscriber("/move_base/local_costmap/footprint")
 
@@ -1307,26 +1371,27 @@ def run():
 
 
     # Wait a second for publisher, subscribers, and TF
-    rospy.sleep(.1)
+    rospy.sleep(.5)
     print("Pubs and Subs Initialized")
     print("- - Begin Operation - -")
+    r = rospy.Rate(10)
 
     while (not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
-        rospy.sleep(.1)
+        if (explore):
+            #Call the explorer function
+            print("- - - - - - - - - - - - Explore = True")
+            theExplorer(mapData)
+        else:
+            print("- - - - - - - - - - - - Explore = False")
+        r.sleep()
     print("")
     print("- - End Operation - -")
 
-    # Check to explore every 10 Hz
-    r = rospy.rate(10)
-    while not rospy.is_shutdown():
-        if (explore):
-            #Call the explorer function
-            theExplorer(mapData)
-        r.sleep()
 # Standalone operation
 if __name__ == '__main__':
     try:
+        rospy.init_node('lab5')
         run()
 
     except rospy.ROSInterruptException:
