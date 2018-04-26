@@ -138,6 +138,13 @@ def theExplorer(data):
     goalPose.pose.orientation.w = 1
 
     #print("X: ",goalPose.pose.position.x," Y: ",goalPose.pose.position.y)
+
+    tolerance = 1
+    currentIndex = getIndex(turtle._current.position.x,turtle._current.position.y)
+    if getEuclidean(currentMiddle,currentIndex) < tolerance:
+        currentMiddle = currentIndex
+
+
     navstackPub.publish(goalPose)
     # rospy.sleep(0.10)
 
@@ -155,16 +162,17 @@ def GenFrontierList(data):
     print(" - Generating Frontier List - ")
     frontierList = []
     unexplored = -1
-    wall = 50
+    wall = 3
+
 
     for index in range(0,len(data)):
         isFrontier = False
         willAdd = False
 
-        if (index > 77828):
-            #print("FINISHED 14000 FRONTIERS!!!")
-            #print("index ", i)
-            break
+        # if (index > 77828):
+        #     #print("FINISHED 14000 FRONTIERS!!!")
+        #     #print("index ", i)
+        #     break
 
 
         tempIndices = []
@@ -175,6 +183,9 @@ def GenFrontierList(data):
             if data[neighbor] == unexplored:
                 frontierList.append(index)
                 break
+    groupCells = generateGridCells(frontierList,4)
+    frontierPub.publish(groupCells)
+
     return frontierList
 
 def SortFrontierList(frontierList):
@@ -202,6 +213,10 @@ def SortFrontierList(frontierList):
         #remainingList.remove(index)
 
     return frontierGroups
+
+
+
+
 #Function: Takes in list of frontier indices and calculates mid node
 def findMiddle(frontList):
     isNearWall = True
@@ -221,17 +236,19 @@ def findMiddle(frontList):
 #Function takes in list of lists of indices and returns the longest list
 def longestFrontierList(frontierGroupList):
     longest = []
-    thresh = 5
-    print("     Frontier Groups: ")
+    thresh = 3
+    print("Frontier Groups: ")
     for group in frontierGroupList:
         print("Length of group: ",len(group))
-        groupCells = generateGridCells(group,5)
-        frontierPub.publish(groupCells)
+
         if len(group) > len(longest):
             longest = group
     if len(longest) <= thresh:
         longest = []
-    print("")
+    print("Longest ", longest)
+    #groupCells = generateGridCells(longest,thresh)
+    #frontierPub.publish(groupCells)
+
     return longest
 
 # ------------------------------ Map Functions ------------------------------ #
@@ -247,6 +264,7 @@ def mapCallBack(data):
     global resolution
     global offsetX
     global offsetY
+    global count
     mapgrid = data
     resolution = data.info.resolution
     mapData = data.data
@@ -258,6 +276,19 @@ def mapCallBack(data):
     #resizeCells(mapData)
     theExplorer(mapData)
     print(" / Map Loaded / ")
+    #
+    # filename = "blank"
+    # count = count + 1
+    # if count%500 == 0:
+    #     yaml = filename + String(count)
+    #     image = "Map_v" + String(count//500)
+    #
+
+
+
+
+
+
     #getResizedNodes(mapData)
     #getGridUpdate(mapData)
     #print data.info
@@ -1317,6 +1348,8 @@ def run():
     global turtle
     turtle = Robot()
     global explore
+    global count
+    count = 1
 
     explore = True
 
@@ -1333,7 +1366,7 @@ def run():
 
     startCell = None
     goalCell = None
-    radius = 3
+    radius = 2
     print("")
     print(" RBE 3002 D18 Lab 4")
     print("")
