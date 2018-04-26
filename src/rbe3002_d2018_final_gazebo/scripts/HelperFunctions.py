@@ -1411,13 +1411,13 @@ def run():
 
     while (not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
-        if (explore):
-            #Call the explorer function
-            print("- - - - - - - - - - - - Explore = True")
-            theExplorer(mapData)
-        else:
-            print("- - - - - - - - - - - - Explore = False")
-        r.sleep()
+        # if (explore):
+        #     #Call the explorer function
+        #     print("- - - - - - - - - - - - Explore = True")
+        #     theExplorer(mapData)
+        # else:
+        #     print("- - - - - - - - - - - - Explore = False")
+        # r.sleep()
     print("")
     print("- - End Operation - -")
 
