@@ -21,13 +21,40 @@ from Queue import PriorityQueue
 
 # ------------------------------ WIP Functions ------------------------------ #
 # Function : Updates status of the explore
-def exploreStatus(status):
+def exploreStatus(theStatus):
     global explore
+    PENDING = 0     # The goal has yet to be processed by the action server
+    ACTIVE = 1      # The goal is currently being processed by the action server
+    PREEMPTED = 2   # The goal received a cancel request after it started executing
+                    #   and has since completed its execution (Terminal State)
+    SUCCEEDED = 3   # The goal was achieved successfully by the action server (Terminal State)
+    ABORTED = 4   # The goal was aborted during execution by the action server due
+                                #    to some failure (Terminal State)
+    REJECTED = 5   # The goal was rejected by the action server without being processed,
+                                #    because the goal was unattainable or invalid (Terminal State)
+    PREEMPTING = 6   # The goal received a cancel request after it started executing
+                                #    and has not yet completed execution
+    RECALLING = 7   # The goal received a cancel request before it started executing,
+                                #    but the action server has not yet confirmed that the goal is canceled
+    RECALLED = 8   # The goal received a cancel request before it started executing
+                                #    and was successfully cancelled (Terminal State)
+    LOST = 9   # An action client can determine that a goal is LOST. This should not be
+        #    sent over the wire by an action server
 
-    if (status != 1):
+
+    realStatus = theStatus.status_list[0].status
+    print("THE status: ",realStatus)
+
+    if (realStatus != 1):
         explore = True
-    elif (status == 1):
+    elif (realStatus == 1):
         explore = False
+    print("Explore? ",explore)
+
+    #if realStatus == PENDING:
+
+
+
 
 # DORA
 # Function: main exploratioin function loads map and goes to new goal indice to explore the whole map and stops once the map is explored
@@ -55,27 +82,26 @@ def theExplorer(data):
     # Find its middle  ......................................needs work
     currentMiddle = findMiddle(currentFrontier)
     print("Goal: ",currentMiddle)
-    theGoalCell = generateGridCells([currentMiddle])
-    goalPub.publish(theGoalCell)
-    print("Goal Published: ",theGoalCell,20 )
+    print("Goal XY: ", getXY(currentMiddle))
+    goalPub.publish(generateGridCells([currentMiddle],15))
 
-    # goalPose = PoseStamped()
-    # x,y = getXY(currentMiddle)
-    #
-    # goalPose.header.frame_id = 'map'
-    # goalPose.pose.position.x = x
-    # goalPose.pose.position.y = y
-    # goalPose.pose.position.z = 0
-    # goalPose.header.stamp = rospy.Time.now()
-    # goalPose.pose.orientation.w = 1
-    #
-    # #print("X: ",goalPose.pose.position.x," Y: ",goalPose.pose.position.y)
-    # navstackPub.publish(goalPose)
+    goalPose = PoseStamped()
+    x,y = getXY(currentMiddle)
+
+    goalPose.header.frame_id = 'map'
+    goalPose.pose.position.x = x
+    goalPose.pose.position.y = y
+    goalPose.pose.position.z = 0
+    goalPose.header.stamp = rospy.Time.now()
+    goalPose.pose.orientation.w = 1
+
+    #print("X: ",goalPose.pose.position.x," Y: ",goalPose.pose.position.y)
+    navstackPub.publish(goalPose)
     # rospy.sleep(0.10)
 
 
     # navigate.........might use astar also but blehh or gen trajectory
-    turtle.navToPose(currentMiddle)
+    #turtle.navToPose(currentMiddle)
     #FIXME use nav stack by calling a posestampeed message to publist to move to goal simple
 
 
@@ -317,9 +343,6 @@ def publishCells01(grid):
 #         i = i+rfactor
 #
 #     return newRes
-
-
-
 
 
 def getGridUpdate(grid):
@@ -757,7 +780,7 @@ class Robot:
         self._odom_list = tf.TransformListener() # Subscribe to transform messages
         rospy.Timer(rospy.Duration(.1), self.timerCallback) # Setup callback - not hard real-time
         self._vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1) # Publisher Twist messages to cmd_vel topic
-        rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
+        #rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
         #rospy.Subscriber('goto', PoseStamped, self.navToPose, queue_size=1) # Subscribe to navigation goal messages
 
     # Function:
@@ -839,10 +862,6 @@ class Robot:
         # ExtremeRotate(initialYaw)
 
     #navToPose(self, currentMiddle)
-
-
-
-
 
     # ---------------------------- Robot Movement Functions ------------------------ #
 
