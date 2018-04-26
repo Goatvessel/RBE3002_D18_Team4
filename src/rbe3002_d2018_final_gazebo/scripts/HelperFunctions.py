@@ -29,7 +29,7 @@ def exploreStatus(status):
     elif (status == 1):
         explore = False
 
-
+# DORA
 # Function: main exploratioin function loads map and goes to new goal indice to explore the whole map and stops once the map is explored
 # Input:
 # Output:
@@ -39,83 +39,116 @@ def theExplorer(data):
     #print ("data",data)
     print("begining to Explore")
     # runs through all the frontierLists
-    frontierLists = []
+    frontierList = []
     #for i in frontierLists:
     # Make of frontierLists using the global map
 
     #while len(frontierLists) == 0:
-    frontierLists = GenFrontierLists(data)
-
-    print ("frontierLists",frontierLists)
+    frontierList = GenFrontierList(data)
+    frontierGroups = SortFrontierList(frontierList)
+    #print("Groups: ",frontierGroups)
+    #print ("frontierLists",frontierList)
 
     # Find the longest frontier group
-    currentFrontier = longestFrontierList(frontierLists)
-
+    currentFrontier = longestFrontierList(frontierGroups)
+    #print("Current Frontier: ",currentFrontier)
     # Find its middle  ......................................needs work
     currentMiddle = findMiddle(currentFrontier)
     print("Goal: ",currentMiddle)
 
+    # goalPose = PoseStamped()
+    # x,y = getXY(currentMiddle)
+    #
+    # goalPose.header.frame_id = 'map'
+    # goalPose.pose.position.x = x
+    # goalPose.pose.position.y = y
+    # goalPose.pose.position.z = 0
+    # goalPose.header.stamp = rospy.Time.now()
+    # goalPose.pose.orientation.w = 1
+    #
+    # #print("X: ",goalPose.pose.position.x," Y: ",goalPose.pose.position.y)
+    # navstackPub.publish(goalPose)
+    # rospy.sleep(0.10)
+
+
     # navigate.........might use astar also but blehh or gen trajectory
     turtle.navToPose(currentMiddle)
+    #FIXME use nav stack by calling a posestampeed message to publist to move to goal simple
 
 
 #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
 
 
 #Fuction: Take in map list of indices and return frontier lists
-def GenFrontierLists(data):
-    print("generating frontier lists")
-    frontierGroups = []
+def GenFrontierList(data):
+    print("generating frontier list")
+    frontierList = []
+    unexplored = -1
+    wall = 51
 
-    for i in range(0,len(data)):
+    for index in range(0,len(data)):
+        isFrontier = False
+        willAdd = False
+
+        if (index > 77828):
+            print("FINISHED 14000 FRONTIERS!!!")
+            #print("index ", i)
+            break
+
+
         tempIndices = []
-        if data[i] != -1 and data[i] != 100: #if not obstacle(100) or unkown(-1), check its neighbors
-            tempIndices = getNearbyIndices(i)
-        for f in tempIndices:
+        if data[index] != unexplored and data[index] >= wall: #if not obstacle(100) or unkown(-1), check its neighbors
+            tempIndices = getNearbyIndices(index)
+        for neighbor in tempIndices:
             #if one of the neighbors is unkown
-            if data[f] == -1:
-                if len(frontierGroups) == 0:
-                    print("frontierGroups is currently empty")
-                    frontierGroups.append([i])
+            if data[neighbor] == unexplored:
+                frontierList.append(index)
+                break
+    return frontierList
 
+def SortFrontierList(frontierList):
+    doneWithNode = False
+    frontierGroups = []
+    frontierGroups.append([frontierList[0]]) #!FIXME Do we need to initialie this with a value?
+    #remainingList = frontierList
+    for index in frontierList:
+        isLonely = True
+        neighbors = getNearbyIndices(index)
+        doneWithNode = False
 
+        for neighbor in neighbors:
+            if doneWithNode:
+                break
+            for group in range(0, len(frontierGroups)):
+                if doneWithNode:
+                    break
+                if neighbor in frontierGroups[group]:
+                    frontierGroups[group].append(index)
+                    isLonely = False
+                    doneWithNode = True
+        if isLonely:
+            frontierGroups.append([index])
+        #remainingList.remove(index)
 
-                # Check if a frontier that is close to the current one has already made a list
-                #FIXME do we need to check afterwards for indices that potentially belong to
-                #       the same frontier, but were placed in separate ones?
-                for m in range(0,len(frontierGroups)):
-                    for n in range(0,len(frontierGroups[m])):
-                        if f == frontierGroups[m][n]:
-                            frontierGroups[m].append(i)
-                        else:
-                            frontierGroups.append([i])
     return frontierGroups
-
 
 #Function: Takes in list of frontier indices and calculates mid node
 def findMiddle(frontList):
-    print(len(frontList))
     midIndex = len(frontList)//2
     middle = frontList[midIndex]
+    #print("middle vb mvb",middle)
     return middle
 
 
 #Function takes in list of lists of indices and returns the longest list
 def longestFrontierList(frontierGroupList):
-
     longest = []
-    # checks if the list is at least 4 cells long (minimum size for robot to fit),
-    #                                   sets i to 1 to skip first element for i-1
-    if len(frontierGroupList) > 4:
-        longest = frontierGroupList[0]
-        i = 1
-        for i in frontierGroupList:
-            # Check which of the two lists is longer
-            if len(longest < len(frontierGroupList[i])):
-                longest = len(frontierGroupList[i])
-            else:
-                print("List too small")
-
+    thresh = 5
+    for group in frontierGroupList:
+        if len(group) > len(longest):
+            longest = group
+    if len(longest) <= thresh:
+        longest = []
     return longest
 
 
@@ -174,6 +207,7 @@ def longestFrontierList(frontierGroupList):
 #     #         index += 1 #?
 #     #     index += 3
 #
+#            if data[f] == -1:
 # def primesLessThan(number):
 #     primes = []
 #     if number <= 3:
@@ -556,6 +590,7 @@ def getEuclidean(start,goal):
 # Input: Goal Pose Message
 # Output: Run Pathfinding
 def readGoal(goalPose):
+    print("READ GOAL :D")
     global goalCell
     global goalX
     global goalY
@@ -821,7 +856,10 @@ class Robot:
 
         global startYaw1
         global startCell
-        startCellXY = getXY(startCell)
+        if startCell == None:
+            startCellXY = (turtle._current.position.x, turtle._current.position.y)
+        else:
+            startCellXY = getXY(startCell)
         while (startCellXY is []):
             rospy.sleep(0.1)
 
@@ -1266,6 +1304,7 @@ def run():
     global gridPathPub
     global wayGridPub
     global wayPathPub
+    global navstackPub
     global turtle
     turtle = Robot()
 
@@ -1299,6 +1338,7 @@ def run():
     gridPathPub = rospy.Publisher("/realPath", GridCells, queue_size=1) # Gridcell path from start to end
     wayPathPub = rospy.Publisher("/wayPath", Path, queue_size=1) # Path path of waypoints from start to end
     wayGridPub = rospy.Publisher("/waypoints", GridCells, queue_size=1)
+    navstackPub = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=1)
 
     goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
     goto_sub = rospy.Subscriber('/goto', PoseStamped, readGoal, queue_size=1) #change topic for best results
