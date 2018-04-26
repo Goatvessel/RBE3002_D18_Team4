@@ -35,25 +35,28 @@ def exploreStatus(status):
 # Output:
 #Might have to be in robot class
 def theExplorer(data):
-    print ("data",data)
+    global turtle
+    #print ("data",data)
     print("begining to Explore")
     # runs through all the frontierLists
     frontierLists = []
+    #for i in frontierLists:
+    # Make of frontierLists using the global map
+
+    #while len(frontierLists) == 0:
+    frontierLists = GenFrontierLists(data)
+
     print ("frontierLists",frontierLists)
-    for i in frontierLists:
-            # Make of frontierLists using the global map
-            #forntiers = GenFrontierLists(globalMap)
-        frontierLists = GenFrontierLists(data)
-        print (frontierLists)
-        # Find the longest frontier group
-        currentFrontier = longestFrontierList(frontierLists)
 
-        # Find its middle  ......................................needs work
-        currentMiddle = findMiddle(currentFrontier)
-        print(currentMiddle)
+    # Find the longest frontier group
+    currentFrontier = longestFrontierList(frontierLists)
 
-        # navigate.........might use astar also but blehh or gen trajectory
-        navToPose(self, currentMiddle)
+    # Find its middle  ......................................needs work
+    currentMiddle = findMiddle(currentFrontier)
+    print("Goal: ",currentMiddle)
+
+    # navigate.........might use astar also but blehh or gen trajectory
+    turtle.navToPose(currentMiddle)
 
 
 #FIXME do we need to call the map server at this point and "store" the map to another location, so we can pass it to A*?
@@ -64,39 +67,43 @@ def GenFrontierLists(data):
     print("generating frontier lists")
     frontierGroups = []
 
-    for i in len(map):
-        for j in len(map[0]):
-            tempIndices = []
-            if map(i, j) != -1 and i != 100: #if not obstacle(100) or unkown(-1), check its neighbors
-                tempIndices = getNearbyIndices(i)
+    for i in range(0,len(data)):
+        tempIndices = []
+        if data[i] != -1 and data[i] != 100: #if not obstacle(100) or unkown(-1), check its neighbors
+            tempIndices = getNearbyIndices(i)
+        for f in tempIndices:
+            #if one of the neighbors is unkown
+            if data[f] == -1:
+                if len(frontierGroups) == 0:
+                    print("frontierGroups is currently empty")
+                    frontierGroups.append([i])
 
 
-            for f in tempIndices:
-                #if one of the neighbors is unkown
-                if f == -1:
-                    # Check if a frontier that is close to the current one has already made a list
-                    #FIXME do we need to check afterwards for indices that potentially belong to the same frontier, but were placed in separate ones?
-                    for m in len(frontierGroups):
-                        for n in len(frontierGroups[0]):
-                            if f == n:
-                                frontierGroups[m].append(j)
-                            else:
-                                frontierGroups.append(j)
 
+                # Check if a frontier that is close to the current one has already made a list
+                #FIXME do we need to check afterwards for indices that potentially belong to
+                #       the same frontier, but were placed in separate ones?
+                for m in range(0,len(frontierGroups)):
+                    for n in range(0,len(frontierGroups[m])):
+                        if f == frontierGroups[m][n]:
+                            frontierGroups[m].append(i)
+                        else:
+                            frontierGroups.append([i])
     return frontierGroups
 
 
 #Function: Takes in list of frontier indices and calculates mid node
 def findMiddle(frontList):
-
-    #FIXME assuming list is in order, should we sort it?
-
-    return frontList[int(len(frontList)/2)]
+    print(len(frontList))
+    midIndex = len(frontList)//2
+    middle = frontList[midIndex]
+    return middle
 
 
 #Function takes in list of lists of indices and returns the longest list
 def longestFrontierList(frontierGroupList):
 
+    longest = []
     # checks if the list is at least 4 cells long (minimum size for robot to fit),
     #                                   sets i to 1 to skip first element for i-1
     if len(frontierGroupList) > 4:
@@ -868,7 +875,7 @@ class Robot:
         # # Rotate to face the Goal position
         # ExtremeRotate(initialYaw)
 
-
+    #navToPose(self, currentMiddle)
 
 
 
@@ -1260,6 +1267,7 @@ def run():
     global wayGridPub
     global wayPathPub
     global turtle
+    turtle = Robot()
 
 
     # Set Important Indices as Global Variables
@@ -1311,7 +1319,7 @@ def run():
     rospy.sleep(.1)
     print("Pubs and Subs Initialized")
     print("- - Begin Operation - -")
-    turtle = Robot()
+
     while (not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         rospy.sleep(.1)
